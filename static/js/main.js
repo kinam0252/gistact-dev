@@ -135,18 +135,18 @@
     ctx.strokeStyle = col;
     ctx.lineWidth = lw * d;
     br();
-    if (label) drawTag(ctx, W, H, x0, y0, h, d, label);
+    if (label) drawTag(ctx, W, H, x0, y0, h, d, label, col === ACC ? null : col);
     ctx.restore();
   }
-  function drawTag(ctx, W, H, x, top, h, d, text) {
+  function drawTag(ctx, W, H, x, top, h, d, text, bg = null) {
     ctx.font = `600 ${16 * d}px ui-monospace,SFMono-Regular,Menlo,Consolas,monospace`;
     const tw = ctx.measureText(text).width, px = 7 * d, bh = 24 * d, lw = tw + 2 * px, up = top - bh - 5 * d;
     const bx = Math.min(W - lw - 4 * d, Math.max(4 * d, x)), by = up >= 4 * d ? up : Math.min(H - bh - 4 * d, top + h + 5 * d);
     ctx.beginPath();
     ctx.roundRect ? ctx.roundRect(bx, by, tw + 2 * px, bh, 5 * d) : ctx.rect(bx, by, tw + 2 * px, bh);
-    ctx.fillStyle = ACC;
+    ctx.fillStyle = bg || ACC;
     ctx.fill();
-    ctx.fillStyle = "#0f1600";
+    ctx.fillStyle = bg ? "#fff" : "#0f1600";
     ctx.textBaseline = "middle";
     ctx.fillText(text, bx + px, by + bh / 2 + d);
   }
@@ -182,6 +182,8 @@
   };
   const glowAt = (t, t1) => t1 == null ? 1 : clamp((t1 - t) / 0.45);
   const E = Infinity, OUT = { real_sem26_r0: { ours: 7.4, base: E, ervla: 12.6, lara: E }, real_pos06_r0: { ours: 7.5, base: E, ervla: E, lara: 5.8 }, real_rank_indist_7390047_r0: { ours: 10.1, base: 5.7, ervla: 12.8, lara: 12.1 }, real_sort_indist_7090001_r0: { ours: 43.2, base: E, ervla: 13.8, lara: 10 }, robolab_lb_XrSmallestItemTask_ep1001: { ours: 20.6, base: 11.4 }, robolab_lb_XrSmallerThanTask_ep0: { ours: 38, base: 43.5 } };
+  const PICK = { real_sem26_r0: { t: 5.15, cx: 0.38, cy: 0.81, rx: 0.05, ry: 0.06, name: "eggplant" }, real_pos06_r0: { t: 5.15, cx: 0.4, cy: 0.8, rx: 0.045, ry: 0.06, name: "lemon" }, real_rank_indist_7390047_r0: { t: 4.48, cx: 0.46, cy: 0.59, rx: 0.045, ry: 0.06, name: "apple" }, real_sort_indist_7090001_r0: { t: 6.8, cx: 0.44, cy: 0.62, rx: 0.05, ry: 0.06, name: "cup" }, robospa_s06: { t: 14.6, cx: 0.57, cy: 0.42, rx: 0.07, ry: 0.12, name: "fan" }, robospa_s07: { t: 15.5, cx: 0.32, cy: 0.44, rx: 0.05, ry: 0.07, name: "fries" }, robospa_s01: { t: 17.5, cx: 0.52, cy: 0.34, rx: 0.05, ry: 0.06, name: "bell" }, vlabench_n01: { t: 7.5, cx: 0.44, cy: 0.44, rx: 0.05, ry: 0.08, name: "salad dressing" }, vlabench_n09: { t: 7.6, cx: 0.86, cy: 0.6, rx: 0.05, ry: 0.06, name: "landscape" }, vlabench_n06: { t: 7.5, cx: 0.37, cy: 0.72, rx: 0.09, ry: 0.17, name: "electronics book" }, robolab_lb_XrSmallestItemTask_ep1001: { t: 11, cx: 0.49, cy: 0.54, rx: 0.03, ry: 0.05, name: "Rubik\u2019s cube" }, robolab_lb_XrSmallerThanTask_ep0: { t: 43, cx: 0.51, cy: 0.43, rx: 0.03, ry: 0.05, name: "orange" } };
+  const NEED = { real_sem26_r0: "Common sense: which food you dip in chocolate.", real_pos06_r0: "Counting: skip the first object from the left, take the next.", real_rank_indist_7390047_r0: "Comparing sizes: find the biggest fruit, then the next one.", real_sort_indist_7090001_r0: "Categories: fruit or vegetable, for every object.", robospa_s06: "Distance: rank the objects by how far they are from the sauce can.", robospa_s07: "Distance: rank the objects by how far they are from the fan.", robospa_s01: "Viewpoint: front and back are flipped from the robot\u2019s side.", vlabench_n01: "Common sense: the red burger topping is ketchup.", vlabench_n09: "Art knowledge: which painting is cubist.", vlabench_n06: "Book knowledge: which novel is magical realism.", robolab_lb_XrSmallestItemTask_ep1001: "Comparing sizes: the smallest of all the items.", robolab_lb_XrSmallerThanTask_ep0: "Comparing sizes: each fruit against the orange." };
   const ocOn = (v, t1) => (v.currentTime || 0) >= (t1 ?? E) || !!v.dataset.done;
   function scrubber(bar, dur, seek, hold, cur) {
     bar.tabIndex = 0;
@@ -278,7 +280,7 @@
   }, []);
   const PLAYERS = window.GA_PLAYERS = new Set();
   const built = () => window.GA_onBuild && window.GA_onBuild();
-  function seq(host, { clip, think, grasp = null, instr = null, strip = [], tag = "GistAct", score = null, ctx = {}, cid = null, names = [], duo = null, okT = null, low = false }) {
+  function seq(host, { clip, think, grasp = null, instr = null, strip = [], tag = "GistAct", score = null, ctx = {}, cid = null, names = [], duo = null, okT = null, low = false, need = null }) {
     host.innerHTML = "";
     const Zw = clip && clip.zoom ? zoomWin(clip.zoom) : null, th = think || {}, steps = mergeLV(th.steps || []), g0 = zmap(Zw, th.grip || gripOf(ctx.ep || ""));
     const segs = segsOf(th, grasp, names).map((sg) => Object.assign(sg, { g: zmap(Zw, sg.g) }));
@@ -292,6 +294,7 @@
     const tThink = T, tPre = T + T_ANS;
     const ip = instr ? el("p", "instr", `<q>${esc(instr)}</q>`) : null, iq = ip && $("q", ip);
     if (ip) host.append(ip);
+    if (need) host.append(el("p", "need", `<b>What it takes</b>${esc(need)}`));
     const grid = el("div", "pgrid" + (duo ? " duo" : strip.length ? " side" : "")), vb = vbox(clip, { tag: esc(tag) + (score != null ? ` <b>${score.toFixed(1)}%</b>` : ""), me: true, bar: true, oc: "ok" }), pan = el("div", "panel");
     const bl = duo ? vbox(duo.clip, { tag: esc(duo.name), oc: "bad" }) : null;
     if (duo) {
@@ -323,7 +326,7 @@
     };
     const bub = el("div", "bub"), bin = el("div", "in"), typ = el("span", "typing", "<i></i><i></i><i></i>");
     bub.append(bin, typ);
-    const DS = [8, 11, 15], DGAP = 7, NEED = DS.reduce((a, d) => a + d, 0) + 4 * DGAP;
+    const DS = [8, 11, 15], DGAP = 7, NEED2 = DS.reduce((a, d) => a + d, 0) + 4 * DGAP;
     const dots = DS.map((s) => {
       const d = el("span", "td");
       d.style.width = d.style.height = s + "px";
@@ -460,11 +463,11 @@
       return { T: T2, R };
     };
     const place = (BW, BH, bw, bh, gx, gy) => {
-      const m = 16, lift = Math.max(NEED, BH * 0.08), { T: TG, R } = keepOut(BW, BH), G = [gx - 26, gy - 26, 52, 52], under = Math.max(m, ...$$(".tag", vb.box).map((t) => t.offsetTop + t.offsetHeight + 12));
-      const C = (low ? [[gx - bw * 0.5, BH - bh - m - 4], [m, BH - bh - m - 4], [BW - bw - m, BH - bh - m - 4]] : [[gx - bw * 0.8, gy - lift - bh], [gx - bw * 0.2, gy - lift - bh], [gx - bw * 0.8, under], [gx - bw * 0.2, under], [gx - NEED - bw, gy - bh * 0.6], [gx + NEED, gy - bh * 0.6], [gx - bw * 0.8, gy + lift], [gx - bw * 0.2, gy + lift], [m, m], [BW - bw - m, m], [m, BH - bh - m], [BW - bw - m, BH - bh - m]]).map(([l, t]) => [Math.min(BW - bw - m, Math.max(m, l)), Math.min(BH - bh - m, Math.max(m, t))]);
+      const m = 16, lift = Math.max(NEED2, BH * 0.08), { T: TG, R } = keepOut(BW, BH), G = [gx - 26, gy - 26, 52, 52], under = Math.max(m, ...$$(".tag", vb.box).map((t) => t.offsetTop + t.offsetHeight + 12));
+      const C = (low ? [[gx - bw * 0.5, BH - bh - m - 4], [m, BH - bh - m - 4], [BW - bw - m, BH - bh - m - 4]] : [[gx - bw * 0.8, gy - lift - bh], [gx - bw * 0.2, gy - lift - bh], [gx - bw * 0.8, under], [gx - bw * 0.2, under], [gx - NEED2 - bw, gy - bh * 0.6], [gx + NEED2, gy - bh * 0.6], [gx - bw * 0.8, gy + lift], [gx - bw * 0.2, gy + lift], [m, m], [BW - bw - m, m], [m, BH - bh - m], [BW - bw - m, BH - bh - m]]).map(([l, t]) => [Math.min(BW - bw - m, Math.max(m, l)), Math.min(BH - bh - m, Math.max(m, t))]);
       const ov = (l, t, [x, y, w, h]) => Math.max(0, Math.min(l + bw, x + w) - Math.max(l, x)) * Math.max(0, Math.min(t + bh, y + h) - Math.max(t, y)) / (bw * bh);
       const room = (l, t) => Math.hypot(Math.max(l - gx, 0, gx - l - bw), Math.max(t - gy, 0, gy - t - bh));
-      const cost = ([l, t], i) => 300 * TG.reduce((o, r) => o + ov(l, t, r), 0) + 100 * R.reduce((o, r) => o + ov(l, t, r), 0) + 20 * ov(l, t, G) + 50 * clamp(1 - room(l, t) / NEED) + (t + bh / 2) / BH + Math.hypot(l + bw / 2 - gx, t + bh / 2 - gy) / BW + i * 0.01;
+      const cost = ([l, t], i) => 300 * TG.reduce((o, r) => o + ov(l, t, r), 0) + 100 * R.reduce((o, r) => o + ov(l, t, r), 0) + 20 * ov(l, t, G) + 50 * clamp(1 - room(l, t) / NEED2) + (t + bh / 2) / BH + Math.hypot(l + bw / 2 - gx, t + bh / 2 - gy) / BW + i * 0.01;
       const cs = C.map(cost);
       let b = cs.indexOf(Math.min(...cs));
       if (SM.ci >= 0 && cs[SM.ci] <= cs[b] + 0.15) b = SM.ci;
@@ -498,7 +501,7 @@
       }
       const ox0 = gx < SM.l ? -1 : gx > SM.l + bw ? 1 : 0, oy0 = gy < SM.t ? -1 : gy > SM.t + bh ? 1 : 0, cc = ox0 && oy0 ? 9 : 0;
       const ex = ox0 < 0 ? SM.l - 4 + cc : ox0 > 0 ? SM.l + bw + 4 - cc : Math.min(SM.l + bw - 22, Math.max(SM.l + 22, gx)), ey = oy0 < 0 ? SM.t - 4 + cc : oy0 > 0 ? SM.t + bh + 4 - cc : Math.min(SM.t + bh - 12, Math.max(SM.t + 12, gy));
-      const back = p.phase === 1 ? clamp(u / 400) : 0, dl = Math.hypot(ex - gx, ey - gy) || 1, sp = Math.max(1, dl / NEED);
+      const back = p.phase === 1 ? clamp(u / 400) : 0, dl = Math.hypot(ex - gx, ey - gy) || 1, sp = Math.max(1, dl / NEED2);
       let acc = DGAP;
       dots.forEach((d, i) => {
         const q = (acc + DS[i] / 2) * sp / dl * (1 - back), X = gx + (ex - gx) * q, Y = gy + (ey - gy) * q, D3 = SM.d[i];
@@ -579,6 +582,12 @@
         dB.classList.toggle("on", onB);
         vb.res(onO);
         bl.res(onB);
+        if (duo.pick && fitCanvas(bl.cv)) {
+          const x = bl.cv.getContext("2d"), W = bl.cv.width, H = bl.cv.height, ct = bl.v.currentTime || 0, k2 = duo.pick, u2 = ct - k2.t + 1;
+          const a = p.phase === 2 ? clamp(u2 / 0.3) * clamp((1.9 - u2) / 0.4) : 0;
+          x.clearRect(0, 0, W, H);
+          drawMark(x, W, H, zmap(duo.clip && duo.clip.zoom ? zoomWin(duo.clip.zoom) : null, k2), a, ease(clamp(u2 / 0.4)), k2.name, getComputedStyle(document.documentElement).getPropertyValue("--bad").trim() || "#ff7b72");
+        }
       } else {
         vb.res(p.phase === 2 && ocOn(vb.v, okT));
         tiles.forEach((x) => x.t.res(p.phase === 2 && ocOn(x.t.v, x.t1)));
@@ -970,6 +979,7 @@
     host.innerHTML = '<div class="thd"><span>Think state</span><i></i><span>is trained to match</span><i></i><span>built from</span></div>' + row(zchip("L", 1), glyphL(9), "SONAR sentence embedding", "frozen SONAR encoder", "<q>Count the objects from the left.</q>") + row(zchip("V", 2, [9, 13]), grid([9, 13], 4), "Image region", "fed back as pooled frozen DINOv2 features", crop({ cx: 0.384, cy: 0.785, rx: 0.037, ry: 0.065 }) + "<span>the lemon\u2019s region</span>") + row('<span class="zc A"><b>END</b><span class="k">answer</span></span>', grid([20, 21, 26, 27], 6), "Goal map", "read out by the answer head", crop({ cx: 0.497, cy: 0.733, rx: 0.036, ry: 0.062 }) + "<span>the target\u2019s cell</span>") + '<p class="tfoot">At run time the states stay latent. A frozen SONAR decoder turns L states into sentences, and V states are drawn as regions, only for inspection.</p>';
   })();
   const TRACK = { Semantic: "Semantic", Position: "Position", Rank: "Size rank", Sort: "Sort" };
+  const OKS = { real_sem26_r0: "Lifts the *strawberry*.", real_pos06_r0: "Lifts the *corn*.", real_rank_indist_7390047_r0: "Puts the *tangerine* on the tray.", real_sort_indist_7090001_r0: "Sorts all four: fruits in the bowl, vegetables on the tray." };
   const FAILS = { real_sem26_r0: { base: "Lifts the *eggplant*.", ervla: "Lifts the *red apple*.", lara: "Knocks over the strawberry, *lifts nothing*." }, real_pos06_r0: { base: "Lifts the *lemon*, the first one.", ervla: "Stops at the corn, *lifts nothing*.", lara: "Lifts the *grapes*." }, real_rank_indist_7390047_r0: { base: "Lifts the biggest fruit, the *apple*.", ervla: "Puts the *apple* on the tray.", lara: "Puts the tangerine *in the bowl*." }, real_sort_indist_7090001_r0: { base: "Puts the *cup* on the tray.", ervla: "Sorts the lemon, *then stops*.", lara: "Puts the lemon *on the tray*." } };
   (() => {
     const tracks = [0, 2, 1, 3].map((i) => R2[i]).filter(Boolean), host = $("#realPlayer"), avg = (m) => {
@@ -980,8 +990,9 @@
     chips($("#realTabs"), tracks.map((e) => esc(TRACK[e.group] || e.group)), (i) => {
       const e = tracks[i];
       if (cur) cur.dispose();
-      const strip = [["\u03C00.5", "\u03C00.5", clipOf(e, "base"), "base"], ["ERVLA", "ERVLA", blArm(e.id, "ervla"), "ervla"], ["LaRA", "LaRA-VLA", blArm(e.id, "lara"), "lara"]].map(([name, m, clip, arm]) => ({ name, clip, score: avg(m), note: (FAILS[e.id] || {})[arm] || "", t: (OUT[e.id] || {})[arm] }));
-      cur = seq(host, { clip: clipOf(e, "ours"), think: e.think, grasp: GRASP[e.id], instr: instrOf(e), strip, okT: (OUT[e.id] || {}).ours, ctx: { ep: e.id, task: TRACK[e.group] }, cid: "real", names: NAMES[e.id] });
+      const strip = [["ERVLA", "ERVLA", blArm(e.id, "ervla"), "ervla"], ["LaRA", "LaRA-VLA", blArm(e.id, "lara"), "lara"]].map(([name, m, clip, arm]) => ({ name, clip, score: avg(m), note: (FAILS[e.id] || {})[arm] || "", t: (OUT[e.id] || {})[arm] }));
+      const oc = OUT[e.id] || {}, duo = { name: "\u03C00.5", clip: clipOf(e, "base"), note: (FAILS[e.id] || {}).base || "", t: oc.base, ok: OKS[e.id] || "", okT: oc.ours, pick: PICK[e.id] };
+      cur = seq(host, { clip: clipOf(e, "ours"), think: e.think, grasp: GRASP[e.id], instr: instrOf(e), strip, duo, need: NEED[e.id], ctx: { ep: e.id, task: TRACK[e.group] }, cid: "real", names: NAMES[e.id] });
     });
   })();
   (() => {
@@ -1009,7 +1020,7 @@
       $("#simTable").hidden = tk == null;
       if (cur) cur.dispose();
       const b0 = x.strip[0], names = x.names || NAMES[x.id] || [], nm2 = names[0];
-      cur = seq(host, Object.assign({}, x, { ctx: { ep: x.id, task: SIMS[i][0] + ": " + SIMS[i][1] }, cid: "sim", low: true, names, strip: b0 ? [] : x.strip, duo: b0 ? Object.assign({ ok: x.ok || (nm2 ? `Picks the *${nm2}*.` : "Succeeds."), okT: x.okT }, b0) : null }));
+      cur = seq(host, Object.assign({}, x, { ctx: { ep: x.id, task: SIMS[i][0] + ": " + SIMS[i][1] }, cid: "sim", low: true, names, need: NEED[x.id], strip: b0 ? [] : x.strip, duo: b0 ? Object.assign({ ok: x.ok || (nm2 ? `Picks the *${nm2}*.` : "Succeeds."), okT: x.okT, pick: PICK[x.id] }, b0) : null }));
     }, SIMS.map((s) => s[0]));
     const TABLES = { "RoboSPA spatial-24": { "groups": ["Geometric attribute", "Spatial distance", "Position index", "Referential relation", "Cross-view", "Overall"], "sub": ["SR", "ONTA"], "rows": [{ "g": "No reasoning" }, { "m": "MolmoAct2", "v": ["36.2", "8.1", "33.8", "15.8", "36.3", "24.1", "22.8", "\u22129.5", "30.8", "10.3", "32.0", "9.8"] }, { "m": "\u03C00.5", "v": ["50.6", "30.8", "42.3", "27.3", "28.5", "14.7", "31.5|u", "5.5|u", "48.9", "33.7", "40.4", "22.4"] }, { "m": "X-VLA", "v": ["36.8", "10.8", "37.2", "20.4", "18.9", "3.2", "22.6", "\u22128.0", "45.6", "29.8", "32.2", "11.2"] }, { "m": "Pointing-VLA", "v": ["52.2|u", "32.4|u", "44.8", "30.8", "29.2", "16.1", "31.1", "4.1", "56.7|u", "43.9|u", "42.8|u", "25.4|u"] }, { "g": "Explicit reasoning" }, { "m": "ECoT-Lite\xA7", "v": ["22.6", "\u22129.7", "36.7", "20.1", "34.9", "23.8", "14.4", "\u221220.8", "31.5", "11.3", "28.0", "4.9"] }, { "m": "ECoT-Lite (CoT on)", "v": ["20.0", "\u221213.1", "38.1", "21.7", "37.9|u", "27.0|u", "15.2", "\u221220.2", "32.6", "12.6", "28.8", "5.6"] }, { "m": "ERVLA\xA7", "v": ["22.7", "\u221211.0", "46.2|u", "32.3|u", "34.5", "21.0", "24.1", "\u22127.0", "41.8", "24.7", "33.9", "12.0"] }, { "m": "ERVLA (CoT on)", "v": ["20.5", "\u221214.5", "34.6", "17.0", "29.8", "15.3", "16.8", "\u221218.3", "31.5", "11.5", "26.6", "2.2"] }, { "m": "MolmoAct2-Think", "v": ["30.1", "\u22120.9", "33.8", "15.9", "34.3", "21.5", "22.2", "\u22129.6", "20.0", "\u22123.4", "28.1", "4.7"] }, { "g": "Latent reasoning" }, { "m": "Fast-ThinkAct", "v": ["7.1", "\u221234.7", "15.9", "\u22127.2", "10.2", "\u22128.1", "4.5", "\u221236.6", "4.4", "\u221223.4", "8.4", "\u221222.0"] }, { "m": "LaRA-VLA", "v": ["31.0", "1.8", "44.7", "30.1", "36.3", "23.8", "18.2", "\u221215.3", "32.1", "12.5", "32.4", "10.6"] }, { "m": "LaST0", "v": ["13.1", "\u221225.7", "16.6", "\u22125.8", "12.0", "\u22126.0", "2.8", "\u221238.7", "8.3", "\u221218.4", "10.6", "\u221218.9"] }, { "m": "GistAct", "v": ["68.6|b", "57.6|b", "60.6|b", "50.5|b", "90.2|b", "88.6|b", "49.3|b", "30.0|b", "70.4|b", "61.5|b", "67.8|b", "57.6|b"], "me": 1 }] }, "VLABench": { "groups": ["In-distribution", "Cross-category", "Common sense", "Semantic instruction", "Unseen texture", "Overall"], "sub": ["SR", "PS", "IS"], "rows": [{ "g": "No reasoning" }, { "m": "MolmoAct2", "v": ["58.2", "69.0", "76.8", "35.6", "50.4", "61.1|b", "30.4", "44.1", "56.8", "38.2", "49.9", "64.8", "54.4", "67.1", "75.4", "43.4", "56.1", "67.0"] }, { "m": "\u03C00.5", "v": ["43.6", "60.2", "66.6", "29.4", "44.9", "58.0", "26.0", "42.0", "52.2", "28.0", "46.9", "60.5", "37.2", "54.1", "62.7", "32.8", "49.6", "60.0"] }, { "m": "X-VLA", "v": ["53.6", "71.2", "83.4|b", "20.9", "27.2", "34.6", "29.0", "46.3", "62.6|u", "44.2", "63.1", "75.6|b", "44.2", "61.2", "77.2|u", "38.4", "53.8", "66.7"] }, { "m": "Pointing-VLA", "v": ["47.8", "60.7", "66.0", "35.9", "47.1", "57.8", "29.0", "42.8", "49.2", "34.8", "51.2", "60.6", "40.0", "55.9", "65.8", "37.5", "51.5", "59.9"] }, { "g": "Explicit reasoning" }, { "m": "ECoT-Lite\xA7", "v": ["47.2", "65.8", "78.6", "28.8", "43.8", "60.3|u", "28.1", "43.9", "57.9", "35.7", "53.4", "67.5", "46.9", "63.6", "77.2|u", "37.3", "54.1", "68.3"] }, { "m": "ECoT-Lite (CoT on)", "v": ["51.2", "67.2", "77.6", "31.0", "44.7", "57.0", "31.1", "46.8", "56.9", "31.7", "49.6", "68.5", "49.5", "64.3", "76.9", "38.9", "54.5", "67.4"] }, { "m": "ERVLA\xA7", "v": ["63.0", "77.3", "81.4|u", "50.2|u", "60.4|u", "59.8", "34.0", "49.6", "55.4", "47.4", "61.3", "70.2", "57.6", "73.5|u", "78.8|b", "50.4", "64.4", "69.1|b"] }, { "m": "ERVLA (CoT on)", "v": ["62.6", "77.8|u", "80.2", "51.3|b", "62.1|b", "60.2", "36.4", "50.9", "56.0", "52.8|u", "66.2|u", "71.8", "60.4|u", "74.9|b", "77.0", "52.7|u", "66.4|u", "69.0|u"] }, { "m": "MolmoAct2-Think", "v": ["63.4|u", "76.2", "79.2", "27.6", "42.7", "53.7", "39.6|u", "51.3|u", "54.8", "43.8", "57.1", "67.2", "58.8", "72.4", "78.8|b", "46.6", "59.9", "66.7"] }, { "g": "Latent reasoning" }, { "m": "Fast-ThinkAct", "v": ["19.6", "38.3", "64.0", "8.0", "22.5", "37.7", "11.8", "28.9", "53.1", "15.2", "33.8", "58.2", "13.0", "33.0", "58.8", "13.5", "31.3", "54.4"] }, { "m": "LaRA-VLA", "v": ["43.8", "63.1", "77.6", "21.3", "37.5", "48.9", "16.8", "33.5", "47.8", "15.2", "33.1", "54.4", "20.2", "38.1", "58.4", "23.5", "41.1", "57.4"] }, { "m": "LaST0", "v": ["21.2", "44.5", "65.6", "11.7", "27.8", "42.4", "9.2", "27.9", "49.0", "3.0", "13.8", "29.0", "8.2", "23.7", "45.4", "10.7", "27.5", "46.3"] }, { "m": "GistAct", "v": ["70.8|b", "79.7|b", "76.6", "39.0", "45.5", "47.8", "53.6|b", "62.6|b", "64.5|b", "68.0|b", "76.9|b", "73.5|u", "65.6|b", "74.9|b", "74.2", "59.4|b", "67.9|b", "67.3"], "me": 1 }] } };
     const cell = (v, ov, gs) => {

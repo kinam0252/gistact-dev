@@ -916,14 +916,52 @@ details.more > p {
   gap: 10px 28px;
 }
 .pgrid.duo .panel {
-  grid-column: 1/-1;
   grid-area: auto;
+  grid-column: 1/-1;
 }
 .pgrid.duo .prow {
   justify-content: flex-end;
 }
 .pgrid.duo .ctl {
   align-items: center;
+}
+.pgrid.duo .strip {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px 28px;
+  margin-top: 6px;
+}
+.pgrid.duo .tile {
+  display: grid;
+  grid-template-columns: 160px minmax(0, 1fr);
+  grid-template-rows: auto 1fr;
+  column-gap: 14px;
+  align-items: start;
+}
+.pgrid.duo .tile .vbox {
+  grid-row: 1/3;
+}
+.pgrid.duo .tile p {
+  margin: 4px 0 0;
+}
+@media (max-width: 640px) {
+  .pgrid.duo .strip {
+    grid-template-columns: 1fr;
+  }
+  .pgrid.duo .tile {
+    grid-template-columns: 44% minmax(0, 1fr);
+  }
+}
+.need {
+  margin: -4px 0 14px;
+  font-size: 16px;
+  line-height: 1.4;
+  color: var(--text);
+}
+.need b {
+  color: var(--acc);
+  font-weight: 600;
+  margin-right: 10px;
 }
 .dout {
   display: block;
