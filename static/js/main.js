@@ -257,7 +257,7 @@
   const T_IN = 350, T_IHOLD = 2e3, T_GLIDE = 550, T_STEP = 1300, T_BLOOM = 500, T_ANS = 1800, T_GAP = 2e3;
   const T_BIRTH = 450, T_DOTS = 250, T_DEC = 300, T_FLY = 450;
   const T_VSTEP = 900;
-  const stepMs = (s) => s.kind === "V" && !s.text ? T_VSTEP : Math.max(T_STEP, 700 + 23 * (s.text || "").length) + T_DOTS + T_DEC;
+  const stepMs = (s) => !s.text ? T_VSTEP : Math.max(T_STEP, 700 + 23 * (s.text || "").length) + T_DOTS + T_DEC;
   const backOut = (x) => {
     x = clamp(x);
     const c = 0.8;
@@ -270,11 +270,17 @@
     while (j < a.length - i && j < b.length - i && a[a.length - 1 - j] === b[b.length - 1 - j]) j++;
     return `${esc(a.slice(0, i).join(" "))} <s>${esc(a.slice(i, a.length - j).join(" "))}</s> <em>${esc(b.slice(i, b.length - j).join(" "))}</em> ${esc(b.slice(b.length - j).join(" "))}`;
   };
+  const mergeLV = (st) => st.reduce((a, s) => {
+    const q = a[a.length - 1];
+    if (s.kind === "V" && !s.text && q && q.kind === "L" && q.cx == null) a[a.length - 1] = Object.assign({}, q, { kind: "LV", cx: s.cx, cy: s.cy, rx: s.rx, ry: s.ry });
+    else a.push(s);
+    return a;
+  }, []);
   const PLAYERS = window.GA_PLAYERS = new Set();
   const built = () => window.GA_onBuild && window.GA_onBuild();
   function seq(host, { clip, think, grasp = null, instr = null, strip = [], tag = "GistAct", score = null, ctx = {}, cid = null, names = [], duo = null, okT = null, low = false }) {
     host.innerHTML = "";
-    const Zw = clip && clip.zoom ? zoomWin(clip.zoom) : null, th = think || {}, steps = th.steps || [], g0 = zmap(Zw, th.grip || gripOf(ctx.ep || ""));
+    const Zw = clip && clip.zoom ? zoomWin(clip.zoom) : null, th = think || {}, steps = mergeLV(th.steps || []), g0 = zmap(Zw, th.grip || gripOf(ctx.ep || ""));
     const segs = segsOf(th, grasp, names).map((sg) => Object.assign(sg, { g: zmap(Zw, sg.g) }));
     const tI = instr ? T_IHOLD + T_GLIDE : 0;
     const at = [];
@@ -328,7 +334,7 @@
     const crop = (r) => clip && clip.poster && r && r.cx != null ? `<span class="crop" style="${cropCss(clip, r)}"></span>` : "";
     const bubHtml = (k) => {
       const s = steps[k];
-      return `${s.kind === "V" ? crop(s) : ""}<div class="tx"><b>Think \xB7 ${s.kind === "V" ? "Vision" : "Language"}</b>${s.text ? `<p>${s.was ? diffHtml(s.was, s.text) : esc(s.text)}</p>` : ""}</div>`;
+      return `${crop(s)}<div class="tx">${s.text ? `<p>${s.was ? diffHtml(s.was, s.text) : esc(s.text)}</p>` : ""}</div>`;
     };
     const tiles = strip.map((s) => {
       const m = el("div", "tile"), t = vbox(s.clip, { oc: "bad" });
@@ -444,7 +450,7 @@
         return [r.cx * BW - hx, r.cy * BH - hy - up, 2 * hx, 2 * hy + up];
       };
       steps.forEach((s) => {
-        if (s.kind === "V" && s.cx != null) R.push(box(zmap(Zw, s), 0));
+        if (s.cx != null) R.push(box(zmap(Zw, s), 0));
       });
       (th.avoid || []).forEach((r) => R.push(box(zmap(Zw, r), 0)));
       const said = steps.map((s) => s.text || "").join(" ").toLowerCase();
@@ -455,7 +461,7 @@
     };
     const place = (BW, BH, bw, bh, gx, gy) => {
       const m = 16, lift = Math.max(NEED, BH * 0.08), { T: TG, R } = keepOut(BW, BH), G = [gx - 26, gy - 26, 52, 52], under = Math.max(m, ...$$(".tag", vb.box).map((t) => t.offsetTop + t.offsetHeight + 12));
-      const C = (low ? [[gx - bw * 0.5, BH - bh - m], [m, BH - bh - m], [BW - bw - m, BH - bh - m]] : [[gx - bw * 0.8, gy - lift - bh], [gx - bw * 0.2, gy - lift - bh], [gx - bw * 0.8, under], [gx - bw * 0.2, under], [gx - NEED - bw, gy - bh * 0.6], [gx + NEED, gy - bh * 0.6], [gx - bw * 0.8, gy + lift], [gx - bw * 0.2, gy + lift], [m, m], [BW - bw - m, m], [m, BH - bh - m], [BW - bw - m, BH - bh - m]]).map(([l, t]) => [Math.min(BW - bw - m, Math.max(m, l)), Math.min(BH - bh - m, Math.max(m, t))]);
+      const C = (low ? [[gx - bw * 0.5, BH - bh - m - 4], [m, BH - bh - m - 4], [BW - bw - m, BH - bh - m - 4]] : [[gx - bw * 0.8, gy - lift - bh], [gx - bw * 0.2, gy - lift - bh], [gx - bw * 0.8, under], [gx - bw * 0.2, under], [gx - NEED - bw, gy - bh * 0.6], [gx + NEED, gy - bh * 0.6], [gx - bw * 0.8, gy + lift], [gx - bw * 0.2, gy + lift], [m, m], [BW - bw - m, m], [m, BH - bh - m], [BW - bw - m, BH - bh - m]]).map(([l, t]) => [Math.min(BW - bw - m, Math.max(m, l)), Math.min(BH - bh - m, Math.max(m, t))]);
       const ov = (l, t, [x, y, w, h]) => Math.max(0, Math.min(l + bw, x + w) - Math.max(l, x)) * Math.max(0, Math.min(t + bh, y + h) - Math.max(t, y)) / (bw * bh);
       const room = (l, t) => Math.hypot(Math.max(l - gx, 0, gx - l - bw), Math.max(t - gy, 0, gy - t - bh));
       const cost = ([l, t], i) => 300 * TG.reduce((o, r) => o + ov(l, t, r), 0) + 100 * R.reduce((o, r) => o + ov(l, t, r), 0) + 20 * ov(l, t, G) + 50 * clamp(1 - room(l, t) / NEED) + (t + bh / 2) / BH + Math.hypot(l + bw / 2 - gx, t + bh / 2 - gy) / BW + i * 0.01;
@@ -560,7 +566,7 @@
         c.clearRect(0, 0, W, H);
         const fly = p.phase === 1 ? REDUCED ? 1 : ease(u / T_FLY) : 0, kk = p.phase === 0 ? k : p.phase === 1 && fly < 1 ? steps.length - 1 : -1;
         steps.forEach((s, j) => {
-          if (j > kk || s.kind !== "V" || s.cx == null) return;
+          if (j > kk || s.cx == null) return;
           const dd = REDUCED ? 1 : ease((p.clock - at[j] - (j ? 0 : T_BIRTH) - T_DOTS) / T_DEC);
           drawMark(c, W, H, zmap(Zw, s), (j === kk && p.phase === 0 ? dd : 0.4) * (1 - fly), dd, "", "#eef2ef", 1.8);
         });
