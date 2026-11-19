@@ -1253,7 +1253,7 @@ details.more > p {
 }
 .fig {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1.9fr) auto minmax(0, 1fr) auto minmax(0, 1fr);
+  grid-template-columns: minmax(0, 1fr) auto minmax(0, 2.3fr) auto minmax(0, 1fr) auto minmax(0, 1fr);
   align-items: start;
   gap: 0 12px;
 }
@@ -1302,6 +1302,7 @@ details.more > p {
   row-gap: 8px;
   align-items: center;
   margin-top: 24px;
+  padding-bottom: 12px;
 }
 .zr {
   grid-column: 1;
