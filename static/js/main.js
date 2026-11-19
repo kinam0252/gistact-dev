@@ -854,7 +854,7 @@
   const zchip = (kind, i, hot = []) => `<span class="zc ${kind}">${kind === "L" ? glyphL(i) : glyphV(hot)}<b>z<sub>${i}</sub></b><span class="k">${kind}</span></span>`;
   (() => {
     const host = $("#fig"), e = byId(R2, "real_pos06_r0"), c = e ? clipOf(e, "ours") : null, poster = c ? c.poster : "", ans = e && e.think ? [].concat(e.think.goal || [])[0] : null;
-    const Z = [{ kind: "L", text: "I need the second object from the left." }, { kind: "L", text: "This lemon on the left is first." }, { kind: "V", cx: 0.384, cy: 0.785, rx: 0.037, ry: 0.065, hot: [9, 13] }, { kind: "L", text: "This corn next to it is second." }, { kind: "V", cx: 0.497, cy: 0.733, rx: 0.036, ry: 0.062, hot: [10, 14] }, { kind: "L", text: "So I want the corn." }];
+    const Z = [{ kind: "L", text: "I need the second object from the left." }, { kind: "L", text: "This lemon on the left is first." }, { kind: "V", cx: 0.384, cy: 0.785, rx: 0.037, ry: 0.065, hot: [9, 13] }, { kind: "L", text: "This corn next to it is second." }, { kind: "V", cx: 0.497, cy: 0.733, rx: 0.036, ry: 0.062, hot: [10, 14] }, { kind: "L", text: "So I\u2019ll pick up the corn." }];
     const ZV = Z.filter((s) => s.kind === "V");
     (e && e.think && e.think.steps || []).filter((s) => s.kind === "V").slice(0, ZV.length).forEach((s, i) => Object.assign(ZV[i], { cx: s.cx, cy: s.cy, rx: s.rx, ry: s.ry }));
     const col = (cls, lab, html) => el("div", "col " + cls, `<div class="lab">${lab}</div>${html}`);
