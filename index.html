@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<meta charset="utf-8">
+<html lang="en">
+<head>
+<meta name="robots" content="noindex, nofollow">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>GistAct: Thinking in Latents, Acting on Grounded Answers</title>
+<meta name="description" content="GistAct works out hard instructions in a few supervised latent states, ends on an answer drawn in the image, and acts on it at the speed of a plain policy.">
+<meta name="theme-color" content="#171613">
+<script>try{document.documentElement.dataset.theme=localStorage.getItem('gistact-theme')==='light'?'light':'dark'}catch(e){document.documentElement.dataset.theme='dark'}</script>
+<link rel="stylesheet" href="static/css/style.css?v=c6030cf">
+<script src="static/js/theme_toggle.js?v=c6030cf"></script>
+</head>
+<body>
+<a class="skip" href="#main">Skip to content</a>
+
+<nav class="nav" aria-label="Sections">
+  <div class="wrap">
+    <a class="brand" href="#top"><svg class="gm" width="24" height="24" viewBox="0 0 32 32" aria-hidden="true"><circle cx="2.9" cy="29.1" r="2" style="fill:var(--acc)"/><circle cx="7.6" cy="24.4" r="2.6" style="fill:var(--acc)"/><path d="M11.5 7.5v-5h5M24.5 2.5h5v5M29.5 15.5v5h-5M16.5 20.5h-5v-5" fill="none" stroke="currentColor" stroke-width="2.8" stroke-linecap="square"/><circle cx="20.5" cy="11.5" r="3.3" style="fill:var(--acc)"/></svg><span>GistAct</span></a>
+    <div class="links">
+      <a href="#overview"><i>01</i>Overview</a>
+      <a href="#real"><i>02</i>Real<span class="xl"> robot</span></a>
+      <a href="#analysis"><i>03</i>Analysis</a>
+      <a href="#sim"><i>04</i>Sim<span class="xl">ulation</span></a>
+      <a href="#bibtex"><i>05</i>BibTeX</a>
+    </div>
+    <button class="tt" type="button" data-theme-toggle aria-label="Switch to light mode">
+      <svg class="sun" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="4.2"/><path d="M12 2.5v2.2M12 19.3v2.2M2.5 12h2.2M19.3 12h2.2M5.3 5.3l1.6 1.6M17.1 17.1l1.6 1.6M5.3 18.7l1.6-1.6M17.1 6.9l1.6-1.6"/></svg>
+      <svg class="moon" viewBox="0 0 24 24" aria-hidden="true"><path d="M20.2 14.6A8.4 8.4 0 0 1 9.4 3.8a8.4 8.4 0 1 0 10.8 10.8z"/></svg>
+    </button>
+  </div>
+</nav>
+
+<main id="main">
+<header class="hero" id="top">
+  <div class="wrap">
+    <h1><span class="wm"><svg class="hm" viewBox="0 0 32 32" aria-hidden="true"><circle class="d1" cx="2.9" cy="29.1" r="2"/><circle class="d2" cx="7.6" cy="24.4" r="2.6"/><path class="bx" d="M11.5 7.5v-5h5M24.5 2.5h5v5M29.5 15.5v5h-5M16.5 20.5h-5v-5"/><circle class="d3" cx="20.5" cy="11.5" r="3.3"/></svg>GistAct</span><span class="st">Thinking in Latents, Acting on Grounded Answers</span></h1>
+    <p class="authors"><span>Kinam Kim<sup>1,2</sup></span> <span>Minho Park<sup>2</sup></span> <span>Min-Hung Chen<sup>1</sup></span> <span>Zhiding Yu<sup>1</sup></span> <span>Fu-En Yang<sup>1</sup></span> <span>Yu-Chiang Frank Wang<sup>1</sup></span> <span>Jaegul Choo<sup>2</sup></span> <span>Chi-Pin Huang<sup>1</sup></span></p>
+    <div class="meta">
+    <div class="affils">
+      <span class="il"><sup>1</sup><img class="nv lg-l" src="static/img/logos/nvidia.png" alt="NVIDIA"><img class="nv lg-d" src="static/img/logos/nvidia_dark.png" alt="NVIDIA"></span><span class="il"><sup>2</sup><img class="ka lg-l" src="static/img/logos/kaist_ai.png" alt="KAIST AI"><img class="ka lg-d" src="static/img/logos/kaist_ai_dark.png" alt="KAIST AI"></span>
+    </div>
+    <div class="pills">
+      <span class="pill off" title="Available with the paper">Paper</span>
+      <span class="pill off" title="Available with the paper">arXiv</span>
+      <span class="pill off" title="Available with the code">Code</span>
+      <a class="pill" href="#bibtex">BibTeX</a>
+    </div>
+    </div>
+  </div>
+</header>
+
+<div class="wrap wide tz">
+  <div class="teaser">
+    <video id="teaser" muted loop playsinline preload="metadata" poster="static/media/teaser.jpg?v=c6030cf" aria-label="Overview video"><source src="static/media/teaser.mp4?v=c6030cf" type="video/mp4"></video>
+  </div>
+</div>
+<div class="wrap">
+  <p class="tzcap">On a real robot and in three simulators, GistAct finds the right object even when the instruction never names it.</p>
+  <p class="tldr"><span class="tl">TL;DR</span>GistAct thinks in a few latent states you can decode and read, marks its answer in the image, and acts on it 100× faster than explicit reasoning.</p>
+  <div class="stats card" role="group" aria-label="Main results">
+    <figure class="sm"><figcaption>Real robot · success</figcaption>
+      <div class="br me" style="--f:0.663" title="GistAct: 66.3%"><span>GistAct</span><i></i><b>66.3%</b></div>
+      <div class="br" style="--f:0.475" title="π0.5: 47.5%"><span>π0.5</span><i></i><b>47.5%</b></div>
+    </figure>
+    <figure class="sm"><figcaption>RoboSPA · success</figcaption>
+      <div class="br me" style="--f:0.678" title="GistAct: 67.8%"><span>GistAct</span><i></i><b>67.8%</b></div>
+      <div class="br" style="--f:0.428" title="Pointing-VLA: 42.8%"><span>Pointing-VLA</span><i></i><b>42.8%</b></div>
+    </figure>
+    <figure class="sm"><figcaption>VLABench · success</figcaption>
+      <div class="br me" style="--f:0.594" title="GistAct: 59.4%"><span>GistAct</span><i></i><b>59.4%</b></div>
+      <div class="br" style="--f:0.527" title="ERVLA: 52.7%"><span>ERVLA</span><i></i><b>52.7%</b></div>
+    </figure>
+    <figure class="sm"><figcaption>Time per decision · lower is better</figcaption>
+      <div class="br me" style="--f:0.012" title="GistAct: 0.15 s"><span>GistAct</span><i></i><b>0.15&nbsp;s</b></div>
+      <div class="br" style="--f:1.000" title="ERVLA: 15.7 s"><span>ERVLA</span><i></i><b>15.7&nbsp;s</b></div>
+    </figure>
+  </div>
+</div>
+
+<section id="overview">
+  <div class="wrap">
+    <div class="head rv">
+      <p class="eyebrow"><i>01</i>Overview</p>
+      <h2>Reason in a few latent steps, mark the target, then act.</h2>
+    </div>
+    <div class="card">
+    <div class="fig rv" id="fig"></div>
+    <details class="more figcap rv"><summary>How the states are trained</summary><div class="train" id="trainFig"></div></details>
+    </div>
+  </div>
+</section>
+
+<section id="real">
+  <div class="wrap">
+    <div class="head rv">
+      <p class="eyebrow"><i>02</i>Real robot</p>
+      <h2>Indirect instructions on a real robot.</h2>
+      <p class="cue">None of these instructions names the object. <span class="num"><b>66.3%</b> average success, against 47.5% for π0.5.</span></p>
+    </div>
+    <div class="tabs rv" id="realTabs" role="tablist" aria-label="Instruction type"></div>
+    <div class="rv" id="realPlayer"></div>
+  </div>
+</section>
+
+<section id="analysis">
+  <div class="wrap">
+    <div class="head rv">
+      <p class="eyebrow"><i>03</i>Analysis</p>
+      <h2>Think is fast, and editing it steers the arm.</h2>
+    </div>
+    <div class="sub" id="speed">
+      <div class="head rv"><h3>Explicit reasoning is slow.</h3></div>
+      <div class="card"><div class="race rv" id="race"></div>
+        <div class="chartblk rv"><p class="chcap">Time per decision with reasoning on at test time, log scale (median, one H100, batch size one).</p><div id="latChart"></div></div></div>
+    </div>
+    <div class="sub" id="steer">
+      <div class="head rv"><h3>Edit one Think state, and the arm follows.</h3></div>
+      <div class="card">
+      <div class="rv" id="steerPlayer"></div>
+      <p class="stat rv"><b>87.0%</b> of episodes follow the edited Think, vs. <b>21.6%</b> without Think supervision.</p>
+      </div>
+    </div>
+    <div class="sub" id="ablate">
+      <div class="head rv"><h3>Think helps only when its states are supervised.</h3></div>
+      <div class="card"><figure class="abl rv">
+        <div class="ar"><span>Act only (no Think)</span><i style="--v:40.2"></i><b>40.2</b></div>
+        <div class="ar"><span>+ latent Think, unsupervised</span><i style="--v:34.1"></i><b>34.1</b></div>
+        <div class="ar"><span>+ supervised Think states</span><i style="--v:55.0"></i><b>55.0</b></div>
+        <div class="ar me"><span>GistAct</span><i style="--v:67.8"></i><b>67.8</b></div>
+        <figcaption>RoboSPA success (%), one component added per row.</figcaption>
+      </figure></div>
+    </div>
+  </div>
+</section>
+
+<section id="sim">
+  <div class="wrap">
+    <div class="head rv">
+      <p class="eyebrow"><i>04</i>Simulation</p>
+      <h2>Indirect instructions in&nbsp;simulation.</h2>
+    </div>
+    <div class="tabs rv" id="simTabs" role="tablist" aria-label="Benchmark"></div>
+    <div class="rv" id="simPlayer"></div>
+    <div class="tablewrap card rv" id="simTable"></div>
+  </div>
+</section>
+
+<section id="bibtex">
+  <div class="wrap">
+    <div class="head"><p class="eyebrow"><i>05</i>Cite</p><h2>BibTeX</h2></div>
+    <div class="bibbox"><button class="copy" id="copyBib" type="button">Copy</button>
+<pre id="bib">@article{kim2026gistact,
+  title   = {GistAct: Thinking in Latents, Acting on Grounded Answers},
+  author  = {Kim, Kinam and Park, Minho and Chen, Min-Hung and Yu, Zhiding and
+             Yang, Fu-En and Wang, Yu-Chiang Frank and Choo, Jaegul and Huang, Chi-Pin},
+  journal = {arXiv preprint},
+  year    = {2026}
+}</pre></div>
+  </div>
+</section>
+</main>
+
+
+<script src="static/js/data.js?v=c6030cf"></script>
+<script src="static/js/think.js?v=c6030cf" onerror="void 0"></script>
+<script src="static/js/real_v2.js?v=c6030cf" onerror="void 0"></script>
+<script src="static/js/real_baselines.js?v=c6030cf" onerror="void 0"></script>
+<script src="static/js/edit_v2.js?v=c6030cf" onerror="void 0"></script>
+<script src="static/js/grasp.js?v=c6030cf" onerror="void 0"></script>
+<script src="static/js/real_fr3.js?v=c6030cf" onerror="void 0"></script>
+<script src="static/js/robolab_lb.js?v=c6030cf" onerror="void 0"></script>
+<script src="static/js/sim_v2.js?v=c6030cf" onerror="void 0"></script>
+<script src="static/js/race_v3.js?v=c6030cf" onerror="void 0"></script>
+<script src="static/js/extras.js?v=c6030cf" onerror="void 0"></script>
+<script src="static/js/main.js?v=c6030cf"></script>
+</body>
+</html>

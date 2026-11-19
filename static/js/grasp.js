@@ -1,0 +1,1 @@
+window.GA_GRASP = { "real_sem26_r0": 5.27, "real_pos06_r0": 5.33, "real_rank_indist_7390047_r0": 3.53, "real_sort_indist_7090001_r0": 6.47, "edit2_pos02_r0_lemon": 4, "edit2_pos02_r0_lemon/edit": 4 };
