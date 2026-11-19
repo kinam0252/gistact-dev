@@ -254,12 +254,13 @@
     r.miss = miss;
     return r;
   }
-  const T_IN = 350, T_IHOLD = 2e3, T_GLIDE = 550, T_STEP = 1500, T_BLOOM = 500, T_ANS = 1800, T_GAP = 2e3;
+  const T_IN = 350, T_IHOLD = 2e3, T_GLIDE = 550, T_STEP = 1300, T_BLOOM = 500, T_ANS = 1800, T_GAP = 2e3;
   const T_BIRTH = 450, T_DOTS = 250, T_DEC = 300, T_FLY = 450;
-  const stepMs = (s) => Math.max(T_STEP, 800 + 25 * (s.text || "").length) + T_DOTS + T_DEC;
+  const T_VSTEP = 900;
+  const stepMs = (s) => s.kind === "V" && !s.text ? T_VSTEP : Math.max(T_STEP, 700 + 23 * (s.text || "").length) + T_DOTS + T_DEC;
   const backOut = (x) => {
     x = clamp(x);
-    const c = 1.6;
+    const c = 0.8;
     return 1 + (c + 1) * Math.pow(x - 1, 3) + c * Math.pow(x - 1, 2);
   };
   const diffHtml = (was, now) => {
@@ -327,7 +328,7 @@
     const crop = (r) => clip && clip.poster && r && r.cx != null ? `<span class="crop" style="${cropCss(clip, r)}"></span>` : "";
     const bubHtml = (k) => {
       const s = steps[k];
-      return `${s.kind === "V" ? crop(s) : ""}<div class="tx"><b>Think \xB7 ${s.kind === "V" ? "Vision" : "Language"}</b><p>${s.was ? diffHtml(s.was, s.text) : esc(s.text || "")}</p></div>`;
+      return `${s.kind === "V" ? crop(s) : ""}<div class="tx"><b>Think \xB7 ${s.kind === "V" ? "Vision" : "Language"}</b>${s.text ? `<p>${s.was ? diffHtml(s.was, s.text) : esc(s.text)}</p>` : ""}</div>`;
     };
     const tiles = strip.map((s) => {
       const m = el("div", "tile"), t = vbox(s.clip, { oc: "bad" });
@@ -453,7 +454,7 @@
       return { T: T2, R };
     };
     const place = (BW, BH, bw, bh, gx, gy) => {
-      const m = 8, lift = Math.max(NEED, BH * 0.08), { T: TG, R } = keepOut(BW, BH), G = [gx - 26, gy - 26, 52, 52], under = Math.max(m, ...$$(".tag", vb.box).map((t) => t.offsetTop + t.offsetHeight + 12));
+      const m = 16, lift = Math.max(NEED, BH * 0.08), { T: TG, R } = keepOut(BW, BH), G = [gx - 26, gy - 26, 52, 52], under = Math.max(m, ...$$(".tag", vb.box).map((t) => t.offsetTop + t.offsetHeight + 12));
       const C = (low ? [[gx - bw * 0.5, BH - bh - m], [m, BH - bh - m], [BW - bw - m, BH - bh - m]] : [[gx - bw * 0.8, gy - lift - bh], [gx - bw * 0.2, gy - lift - bh], [gx - bw * 0.8, under], [gx - bw * 0.2, under], [gx - NEED - bw, gy - bh * 0.6], [gx + NEED, gy - bh * 0.6], [gx - bw * 0.8, gy + lift], [gx - bw * 0.2, gy + lift], [m, m], [BW - bw - m, m], [m, BH - bh - m], [BW - bw - m, BH - bh - m]]).map(([l, t]) => [Math.min(BW - bw - m, Math.max(m, l)), Math.min(BH - bh - m, Math.max(m, t))]);
       const ov = (l, t, [x, y, w, h]) => Math.max(0, Math.min(l + bw, x + w) - Math.max(l, x)) * Math.max(0, Math.min(t + bh, y + h) - Math.max(t, y)) / (bw * bh);
       const room = (l, t) => Math.hypot(Math.max(l - gx, 0, gx - l - bw), Math.max(t - gy, 0, gy - t - bh));
@@ -838,11 +839,12 @@
   const zchip = (kind, i, hot = []) => `<span class="zc ${kind}">${kind === "L" ? glyphL(i) : glyphV(hot)}<b>z<sub>${i}</sub></b><span class="k">${kind}</span></span>`;
   (() => {
     const host = $("#fig"), e = byId(R2, "real_pos06_r0"), c = e ? clipOf(e, "ours") : null, poster = c ? c.poster : "", ans = e && e.think ? [].concat(e.think.goal || [])[0] : null;
-    const Z = [{ kind: "L", text: "Count the objects from the left." }, { kind: "V", cx: 0.384, cy: 0.785, rx: 0.037, ry: 0.065, text: "First: the lemon.", hot: [9, 13] }, { kind: "V", cx: 0.497, cy: 0.733, rx: 0.036, ry: 0.062, text: "Second: the corn.", hot: [10, 14] }];
-    (e && e.think && e.think.steps || []).filter((s) => s.kind === "V").slice(0, 2).forEach((s, i) => Object.assign(Z[i + 1], { cx: s.cx, cy: s.cy, rx: s.rx, ry: s.ry }));
+    const Z = [{ kind: "L", text: "I need the second object from the left." }, { kind: "L", text: "This lemon on the left is first." }, { kind: "V", cx: 0.384, cy: 0.785, rx: 0.037, ry: 0.065, hot: [9, 13] }, { kind: "L", text: "This corn next to it is second." }, { kind: "V", cx: 0.497, cy: 0.733, rx: 0.036, ry: 0.062, hot: [10, 14] }, { kind: "L", text: "So I want the corn." }];
+    const ZV = Z.filter((s) => s.kind === "V");
+    (e && e.think && e.think.steps || []).filter((s) => s.kind === "V").slice(0, ZV.length).forEach((s, i) => Object.assign(ZV[i], { cx: s.cx, cy: s.cy, rx: s.rx, ry: s.ry }));
     const col = (cls, lab, html) => el("div", "col " + cls, `<div class="lab">${lab}</div>${html}`);
     const img = (cls) => `<div class="img ${cls}"><img src="${poster}" alt=""><canvas></canvas></div>`;
-    const rows = Z.map((s, i) => `<div class="zr" style="grid-row:${i + 1}">${zchip(s.kind, i + 1, s.hot)}</div><i class="dar" style="grid-row:${i + 1}"></i><div class="dz" style="grid-row:${i + 1}">${s.kind === "V" && c ? `<span class="crop" style="${cropCss(c, s)}"></span>` : ""}<span>${s.text.length <= 20 ? esc(s.text).replace(/ /g, "&nbsp;") : esc(s.text)}</span></div>`).join("");
+    const rows = Z.map((s, i) => `<div class="zr" style="grid-row:${i + 1}">${zchip(s.kind, i + 1, s.hot)}</div><i class="dar" style="grid-row:${i + 1}"></i><div class="dz" style="grid-row:${i + 1}">${s.kind === "V" && c ? `<span class="crop" style="${cropCss(c, s)}"></span>` : ""}${s.text ? `<span>${s.text.length <= 20 ? esc(s.text).replace(/ /g, "&nbsp;") : esc(s.text)}</span>` : ""}</div>`).join("");
     const cols = [col("cin", "Input", img("in") + '<p class="q">\u201CPick up the second object from the left.\u201D</p>'), col("cth", "Think", `<div class="zgrid"><div class="dbox" style="grid-row:1/${Z.length + 1}"><span class="dtag">decoded for inspection</span></div>${rows}</div>`), col("cans", "Answer", img("out") + '<p class="q">The target, marked in the image.</p>'), col("cact", "Act", '<div class="img av"><video muted playsinline preload="none" aria-label="GistAct grasping the corn"></video></div><p class="q">0.15 s per decision</p>')];
     cols.forEach((x, i) => {
       host.append(x);
@@ -857,7 +859,7 @@
     let T = 300;
     Z.forEach((s) => {
       at.push(T);
-      T += Math.max(T_STEP, 800 + 25 * s.text.length) + T_DOTS + T_DEC;
+      T += stepMs(s);
     });
     const tE = T, tFly = tE + 650, tLand = tFly + T_FLY, tAct = tLand + T_ANS, tEnd = tAct + 400;
     const S = { on: false, t: REDUCED ? tEnd : -1, armed: false };
