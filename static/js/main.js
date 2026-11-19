@@ -463,7 +463,7 @@
       return { T: T2, R };
     };
     const place = (BW, BH, bw, bh, gx, gy) => {
-      const m = 16, lift = Math.max(NEED2, BH * 0.08), { T: TG, R } = keepOut(BW, BH), G = [gx - 26, gy - 26, 52, 52], under = Math.max(m, ...$$(".tag", vb.box).map((t) => t.offsetTop + t.offsetHeight + 12));
+      const m = 16 + Math.round(0.05 * bw), lift = Math.max(NEED2, BH * 0.08), { T: TG, R } = keepOut(BW, BH), G = [gx - 26, gy - 26, 52, 52], under = Math.max(m, ...$$(".tag", vb.box).map((t) => t.offsetTop + t.offsetHeight + 12));
       const C = (low ? [[gx - bw * 0.5, BH - bh - m - 4], [m, BH - bh - m - 4], [BW - bw - m, BH - bh - m - 4]] : [[gx - bw * 0.8, gy - lift - bh], [gx - bw * 0.2, gy - lift - bh], [gx - bw * 0.8, under], [gx - bw * 0.2, under], [gx - NEED2 - bw, gy - bh * 0.6], [gx + NEED2, gy - bh * 0.6], [gx - bw * 0.8, gy + lift], [gx - bw * 0.2, gy + lift], [m, m], [BW - bw - m, m], [m, BH - bh - m], [BW - bw - m, BH - bh - m]]).map(([l, t]) => [Math.min(BW - bw - m, Math.max(m, l)), Math.min(BH - bh - m, Math.max(m, t))]);
       const ov = (l, t, [x, y, w, h]) => Math.max(0, Math.min(l + bw, x + w) - Math.max(l, x)) * Math.max(0, Math.min(t + bh, y + h) - Math.max(t, y)) / (bw * bh);
       const room = (l, t) => Math.hypot(Math.max(l - gx, 0, gx - l - bw), Math.max(t - gy, 0, gy - t - bh));
