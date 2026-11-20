@@ -32,7 +32,7 @@ h1{font-size:28px;margin:0 0 6px}
 .bar button{font:500 15px var(--sans);color:var(--text);background:var(--panel2);border:1px solid var(--line2);border-radius:999px;padding:5px 14px;cursor:pointer}
 .bar button.on{background:var(--acc);color:var(--acc-ink);border-color:var(--acc)}
 .bar .sp{flex:1}
-.cap{min-height:3.1em;margin:8px 4px 0;font-size:16.5px;line-height:1.5}
+.cap{display:none}
 
 /* canvas: 1032 wide, drawn in canvas px and scaled to the card */
 .host{position:relative;width:100%;overflow:hidden auto;overflow-x:auto;overflow-y:hidden;transition:height .5s ease}
@@ -57,7 +57,7 @@ h1{font-size:28px;margin:0 0 6px}
 @keyframes glowg{50%{box-shadow:0 0 0 3px rgba(168,214,94,.35)}}
 @keyframes glowb{50%{box-shadow:0 0 0 3px rgba(124,183,224,.4)}}
 .panel{border:1.5px solid color-mix(in srgb,var(--acc) 45%,transparent);border-radius:12px;background:rgba(168,214,94,.05)}
-.frame{border-radius:9px;overflow:hidden;border:1.5px solid var(--line2);background:#000;transition:border-color .3s}
+.frame{border-radius:9px;overflow:hidden;clip-path:inset(0 round 9px);border:1.5px solid var(--line2);background:#000;transition:border-color .3s}   /* clip-path: a <video> layer escaped the rounded overflow clip */
 .frame.acc{border-color:var(--acc)}
 .frame img,.frame video{position:absolute;max-width:none;display:block}
 .frame svg{position:absolute;inset:0;width:100%;height:100%}
@@ -80,12 +80,12 @@ h1{font-size:28px;margin:0 0 6px}
 .zw{display:flex;justify-content:center}
 .zw .zc{width:100%;justify-content:center}
 /* Think chips: an empty dashed slot waits, the writer ring arrives, the chip settles in */
-.zw::before{content:"";position:absolute;inset:0;border:1.5px dashed color-mix(in srgb,var(--acc) 45%,transparent);border-radius:8px;opacity:0;transition:opacity .4s ease}
+.zw::before{content:"";position:absolute;inset:0;border:1.5px dashed color-mix(in srgb,var(--acc) 40%,transparent);border-radius:8px;opacity:0;transition:opacity .6s ease}
 .cv.play.th .zw:not(.on)::before{opacity:1}
 .cv.play .zw.n:not(.on){opacity:1}
-.cv.play .zw .zc{transition:opacity .4s ease,transform .5s cubic-bezier(.2,.9,.3,1.15),filter .4s ease}
-.cv.play .zw:not(.on) .zc{opacity:0;transform:translateY(9px) scale(.78);filter:blur(3px)}
-.wring{z-index:2;border:2px solid var(--acc);border-radius:11px;box-shadow:0 0 16px rgba(168,214,94,.45);opacity:0;pointer-events:none;transition:left .26s cubic-bezier(.45,0,.2,1),width .26s cubic-bezier(.45,0,.2,1),opacity .35s ease}
+.cv.play .zw .zc{transition:opacity .7s cubic-bezier(.16,1,.3,1),transform .9s cubic-bezier(.16,1,.3,1),filter .7s ease-out}
+.cv.play .zw:not(.on) .zc{opacity:0;transform:translateX(-16px) scale(.94);filter:blur(4px)}
+.wring{z-index:2;border:1.5px solid color-mix(in srgb,var(--acc) 80%,transparent);border-radius:11px;box-shadow:0 0 18px rgba(168,214,94,.4),inset 0 0 12px rgba(168,214,94,.18);opacity:0;pointer-events:none;transition:opacity .5s ease}
 .wring.on{opacity:1}
 svg.ov{left:0;top:0;width:1032px;height:480px;overflow:visible;pointer-events:none}
 .ar{fill:none;stroke:var(--text2);stroke-width:1.7}
@@ -110,10 +110,10 @@ svg.ov{left:0;top:0;width:1032px;height:480px;overflow:visible;pointer-events:no
   clip-path:inset(32px 390px 248px 0 round 12px);transition:clip-path 1.2s cubic-bezier(.45,0,.2,1),opacity .3s}
 .insp.arm{opacity:1}
 .cv>:not(.insp){transition:opacity .45s ease}
-.cv.inspecting>:not(.insp){opacity:0!important}.insp.open{clip-path:inset(0 0 0 0 round 14px);pointer-events:auto}
+.cv.inspecting>:not(.insp){opacity:0!important;visibility:hidden;transition:opacity .45s ease,visibility 0s .45s}.insp.open{clip-path:inset(0 0 0 0 round 14px);pointer-events:auto}
 .cv.train .insp{display:none}
 /* train: the diagram steps aside for one worked example of state supervision */
-.cv.train>:not(.trs){opacity:0!important;pointer-events:none}
+.cv.train>:not(.trs){opacity:0!important;visibility:hidden;pointer-events:none}
 .trs{opacity:0;pointer-events:none;transition:opacity .45s ease}.cv.train .trs{opacity:1;pointer-events:auto}
 .trs>*,.scn>*{position:absolute}
 .sw{transition:opacity .35s ease,transform .35s ease}.sw .zc{width:100%;justify-content:center;transition:border-color .3s,box-shadow .3s}
@@ -213,7 +213,7 @@ const centred = (cx, w, y, h) => `left:${cx - w / 2}px;top:${y - h / 2}px;width:
 
 /* Train: one worked example per state type (illustration of the losses, not logged training curves) */
 const GC = 16, GR = 9, GS = 22, MW = GC * GS, MH = GR * GS;   // 352 x 198 patch grid over the cropped image
-const cells = (cls, col) => `<svg class="g ${cls}" viewBox="0 0 ${MW} ${MH}"><rect width="${MW}" height="${MH}" fill="#000" fill-opacity=".28"/>${Array.from({ length: GC * GR }, (_, j) => `<rect class="c" x="${(j % GC) * GS}" y="${Math.floor(j / GC) * GS}" width="${GS}" height="${GS}" fill="${col}" style="fill-opacity:0" stroke="rgba(255,255,255,.14)" stroke-width=".6"/>`).join('')}</svg>`;
+const cells = (cls, col) => `<svg class="g ${cls}" viewBox="0 0 ${MW} ${MH}"><rect width="${MW}" height="${MH}" fill="#000" fill-opacity=".28"/>${Array.from({ length: GC * GR }, (_, j) => `<rect class="c" x="${(j % GC) * GS}" y="${Math.floor(j / GC) * GS}" width="${GS}" height="${GS}" fill="${col}" style="fill-opacity:0" stroke="rgba(0,0,0,.32)" stroke-width=".8"/>`).join('')}</svg>`;
 const arrowR = (x0, x1, y, cls = '') => `<svg class="${cls}" style="left:${x0}px;top:${y - 6}px;width:${x1 - x0}px;height:12px;overflow:visible"><path d="M0 6H${x1 - x0 - 2}" stroke="var(--text2)" stroke-width="1.7"/><path d="M${x1 - x0 - 7} 1.5L${x1 - x0} 6L${x1 - x0 - 7} 10.5" fill="none" stroke="var(--text2)" stroke-width="1.7"/></svg>`;
 const arrowU = (x, y0, y1) => `<svg style="left:${x - 6}px;top:${y1}px;width:12px;height:${y0 - y1}px;overflow:visible"><path d="M6 ${y0 - y1}V2" stroke="var(--text2)" stroke-width="1.7"/><path d="M1.5 7L6 0L10.5 7" fill="none" stroke="var(--text2)" stroke-width="1.7"/></svg>`;
 const img = w => media(w, w * 9 / 16, `<img src="${POSTER}" alt="">`);
@@ -241,8 +241,8 @@ const trainScene = () => `<div class="trs" style="${box(OV)}">
   <div class="ttl" style="left:0;top:14px;width:104px;text-align:left">Think states</div>
   ${Z.map((z, i) => `<div class="sw" style="left:${120 + i * 82}px;top:6px;width:${i < 6 ? CW : EW}px;height:30px">${zc(z.k, i + 1, z.hot)}</div><div class="lt" data-k="${z.k}" style="left:${120 + i * 82}px;top:44px;width:${i < 6 ? CW : EW}px">${{ L: 'ℒsem', V: 'ℒreg', E: 'ℒans' }[z.k]}</div>`).join('')}
   <div class="lact" style="left:700px;top:4px;width:290px">Action expert: <b>ℒact</b> on the demo’s action chunk (flow matching)</div>
-  ${mapScene('V', { head: 'region head', from: 'reads z<sub>3</sub>', pt: 'p̂, predicted region', tt: 'm, annotated region over patches', loss: 'ℒreg = KL(m ‖ p̂)', r: Z[2].r,
-    extra: `<div class="frow fade fr" style="left:120px;top:306px;width:860px"><span class="trap">DINOv2 ${SNOW}<br>patch features</span><span class="eq">× p̂ →</span><span class="vh"></span><span>pooled feature v̂, fed back after z<sub>3</sub>. It is the model’s own guess, never the label.</span></div>` })}
+  ${mapScene('V', { head: 'region head', from: 'reads z<sub>3</sub>', pt: 'p, predicted region', tt: 'm, annotated region over patches', loss: 'ℒreg = KL(m ‖ p)', r: Z[2].r,
+    extra: `<div class="frow fade fr" style="left:120px;top:306px;width:860px"><span class="trap">DINOv2 ${SNOW}<br>patch features</span><span class="eq">× p →</span><span class="vh"></span><span>pooled feature v̂, fed back after z<sub>3</sub>. It is the model’s own guess, never the label.</span></div>` })}
   ${vecScene()}
   ${mapScene('E', { head: 'answer head', from: 'reads END', pt: 'answer map', tt: 'm*, the target', loss: 'ℒans = KL(m* ‖ p)', r: CORN })}
 </div>`;
@@ -321,8 +321,8 @@ const CAP = {
   cut: 'The instruction never reaches the action expert. It acts on what Think marked.',
   go: 'It turns noise into an action chunk with flow matching, at every query.',
   tv1: 'In training, each Think state gets its own target. For the Vision state z₃, the target m is the annotated lemon region, spread over the image patches.',
-  tv2: 'A region head turns z₃ into a map p̂ over the same patches. Training lowers KL(m ‖ p̂), so p̂ moves onto the lemon.',
-  tv3: 'The VLM gets back its own guess: frozen DINOv2 patch features pooled by p̂. The label is never fed back.',
+  tv2: 'A region head turns z₃ into a map p over the same patches. Training lowers KL(m ‖ p), so p moves onto the lemon.',
+  tv3: 'The VLM gets back its own guess: frozen DINOv2 patch features pooled by p. The label is never fed back.',
   tl: 'Language states are trained the same way in sentence space. A diffusion head samples ŝ from z₄, pulled toward the frozen SONAR embedding of its sentence.',
   ta: 'After END, the answer head scores the image patches and is trained toward the target: the corn.',
   train: 'Every Think state and the answer get their own target, and the action expert learns the demo’s actions with flow matching. No reasoning teacher, no distillation, no RL.'
@@ -360,15 +360,17 @@ function player(host, cv, cap) {
     cap.textContent = cv.classList.contains('train') ? CAP.train : CAP.rest; if (seen) loopVid(); };
   const play = () => {
     if (REDUCED || cv.classList.contains('train')) return rest();
-    T.forEach(clearTimeout); T = []; shut(); cv.classList.remove('th'); cv.classList.add('play'); ring.style.transition = 'none'; writer(0); void ring.offsetWidth; ring.style.transition = ''; cv.querySelectorAll('.n').forEach(e => e.classList.remove('on')); slots.forEach(s => s.classList.remove('f')); vid.pause();
+    T.forEach(clearTimeout); T = []; shut(); cv.classList.remove('th'); cv.classList.add('play'); ring.style.transition = 'none'; writer(0); void ring.offsetWidth; cv.querySelectorAll('.n').forEach(e => e.classList.remove('on')); slots.forEach(s => s.classList.remove('f')); vid.pause();
     cap.textContent = CAP.in;
     at(200, () => on('in', 'slots', 'vlm', 'aeb'));
     at(800, () => on('inar'));
     at(1500 + P.lead, () => { vlm.classList.add('busy'); cap.textContent = CAP.think; cv.classList.add('th'); on('thp', 'out', 'fb'); slots[0].classList.add('f'); ring.classList.add('on'); });
-    const DT = 400;   // one state every 0.4 s: the ring sits on the slot, the chip settles in, the ring slides on
-    Z.forEach((z, i) => { at(2000 + P.lead + i * DT, () => { on('z' + i); if (i < 6) slots[i + 1].classList.add('f'); }); if (i < 6) at(2000 + P.lead + i * DT + 170, () => writer(i + 1)); });
-    const t1 = 2000 + P.lead + 7 * DT + 300;
-    at(t1 - 200, () => ring.classList.remove('on'));
+    // one continuous sweep: the ring glides from z1 to END at constant speed and each chip blooms as the ring reaches it
+    const SW = 2400, t0 = 2000 + P.lead, frac = i => (CX(i) - CX(0)) / (CX(6) - CX(0));
+    at(t0, () => { ring.style.transition = `left ${SW}ms linear, width 300ms ease ${SW - 300}ms, opacity .5s ease`; writer(6); });
+    Z.forEach((z, i) => at(t0 + Math.max(0, frac(i) * SW - 120), () => { on('z' + i); if (i < 6) slots[i + 1].classList.add('f'); }));
+    const t1 = t0 + SW + 600;
+    at(t0 + SW + 150, () => ring.classList.remove('on'));
     at(t1, () => { vlm.classList.remove('busy'); cap.textContent = CAP.end; on('ans'); });
     at(t1 + P.feat, () => { cap.textContent = CAP.feat; on('bias', 'feat'); });
     at(t1 + P.cut, () => { cap.textContent = CAP.cut; on('cut'); });
