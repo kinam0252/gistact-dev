@@ -2347,6 +2347,35 @@ table.res.big {
   color: var(--text2);
   font-variant-numeric: tabular-nums;
 }
+.tfs {
+  flex: none;
+  width: 30px;
+  height: 30px;
+  display: grid;
+  place-items: center;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: none;
+  color: var(--text);
+  margin-right: -6px;
+}
+.tfs:hover {
+  color: var(--acc);
+}
+.tfs svg {
+  width: 15px;
+  height: 15px;
+  fill: currentColor;
+}
+.teaser:fullscreen {
+  aspect-ratio: auto;
+  border: 0;
+  border-radius: 0;
+}
+.teaser:fullscreen video {
+  object-fit: contain;
+}
 @media (max-width: 760px) {
   .tctl {
     left: 6px;
@@ -2355,7 +2384,8 @@ table.res.big {
     gap: 8px;
     padding: 1px 10px 1px 2px;
   }
-  .tpp {
+  .tpp,
+  .tfs {
     width: 26px;
     height: 26px;
   }

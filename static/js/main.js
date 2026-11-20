@@ -676,7 +676,8 @@
     so.remove();
     v.load();
     const P = '<svg viewBox="0 0 16 16" aria-hidden="true"><path d="M4 2.5v11l9-5.5z"/></svg>', Z = '<svg viewBox="0 0 16 16" aria-hidden="true"><path d="M3.5 2.5h3v11h-3zM9.5 2.5h3v11h-3z"/></svg>';
-    const ctl = el("div", "tctl", `<button type="button" class="tpp" aria-label="Pause">${Z}</button><div class="tbar"><b></b></div><span class="ttime">0:00</span>`);
+    const F = '<svg viewBox="0 0 16 16" aria-hidden="true"><path d="M2 6V2h4v1.6H3.6V6zM10 2h4v4h-1.6V3.6H10zM14 10v4h-4v-1.6h2.4V10zM6 14H2v-4h1.6v2.4H6z"/></svg>';
+    const ctl = el("div", "tctl", `<button type="button" class="tpp" aria-label="Pause">${Z}</button><div class="tbar"><b></b></div><span class="ttime">0:00</span><button type="button" class="tfs" aria-label="Full screen">${F}</button>`);
     box.append(ctl);
     const pp = $(".tpp", ctl), bar = $(".tbar", ctl), fill = $("b", bar), tm = $(".ttime", ctl), fmt = (s) => `${Math.floor(s / 60)}:${String(Math.floor(s % 60)).padStart(2, "0")}`;
     let userPaused = REDUCED, seen = false, wasOn = false;
@@ -703,6 +704,11 @@
       } else if (wasOn) play(v);
     }, () => v.currentTime);
     bar.addEventListener("pointerdown", () => load(v), { capture: true });
+    $(".tfs", ctl).onclick = () => {
+      if (document.fullscreenElement) document.exitFullscreen();
+      else if (box.requestFullscreen) box.requestFullscreen();
+      else if (v.webkitEnterFullscreen) v.webkitEnterFullscreen();
+    };
     TICKS.add(() => {
       const d = v.duration || 0;
       if (!d) return;
@@ -860,7 +866,7 @@
     const col = (cls, lab, html) => el("div", "col " + cls, `<div class="lab">${lab}</div>${html}`);
     const img = (cls) => `<div class="img ${cls}"><img src="${poster}" alt=""><canvas></canvas></div>`;
     const rows = Z.map((s, i) => `<div class="zr" style="grid-row:${i + 1}">${zchip(s.kind, i + 1, s.hot)}</div><i class="dar" style="grid-row:${i + 1}"></i><div class="dz" style="grid-row:${i + 1}">${s.kind === "V" && c ? `<span class="crop" style="${cropCss(c, s)}"></span>` : ""}${s.text ? `<span>${s.text.length <= 20 ? esc(s.text).replace(/ /g, "&nbsp;") : esc(s.text)}</span>` : ""}</div>`).join("");
-    const cols = [col("cin", "Input", img("in") + '<p class="q">\u201CPick up the second object from the left.\u201D</p>'), col("cth", "Think", `<div class="zgrid"><div class="dbox" style="grid-row:1/${Z.length + 1}"><span class="dtag">decoded for inspection</span></div>${rows}</div>`), col("cans", "Answer", img("out") + '<p class="q">The target, marked in the image.</p>'), col("cact", "Act", '<div class="img av"><video muted playsinline preload="none" aria-label="GistAct grasping the corn"></video></div><p class="q">0.15 s per decision</p>')];
+    const cols = [col("cin", "Input", img("in") + '<p class="q">\u201CPick up the second object from the left.\u201D</p>'), col("cth", "Think", `<div class="zgrid"><div class="dbox" style="grid-row:1/${Z.length + 1}"><span class="dtag">decoded for inspection</span></div>${rows}</div>`), col("cans", "Answer", img("out") + '<p class="q">The target, marked in the image.</p>'), col("cact", "Act", '<div class="img av"><video muted playsinline preload="none" aria-label="GistAct grasping the corn"></video></div><p class="q">Actions generated for the marked target.</p>')];
     cols.forEach((x, i) => {
       host.append(x);
       if (i < 3) host.append(el("div", "arr", "\u2192"));
