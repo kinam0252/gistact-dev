@@ -17,8 +17,10 @@
   --mono:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
 }
 *{box-sizing:border-box}
+/* an iframe whose color-scheme differs from the dark page gets an opaque white canvas: paint our own and match the page's 12 px radius */
+html{background:var(--bg);color-scheme:dark}html.vid{--bg:#07090a}
 body{margin:0;background:transparent;color:var(--text);font:400 17px/1.6 var(--sans)}
-.fig{border-radius:14px}
+.fig{border-radius:12px}
 .wrap{max-width:1300px;margin:0 auto;padding:28px 16px 80px}
 h1{font-size:28px;margin:0 0 6px}
 .sub{color:var(--text2);margin:0 0 18px;max-width:900px}
@@ -170,7 +172,7 @@ body.vid{--bg:#07090a}body.vid .bar,body.vid .cap{display:none}body.vid .fig{bor
 (() => {
 'use strict';
 const VID = /[?&]video\b/.test(location.search), REDUCED = !VID && matchMedia('(prefers-reduced-motion: reduce)').matches;
-if (VID) document.body.classList.add('vid');
+if (VID) { document.body.classList.add('vid'); document.documentElement.classList.add('vid'); }
 // beat timings (ms); the teaser recording leaves room for its captions (each >= 2.4 s) and ends on the open decoded view
 const P = VID ? { lead: 900, feat: 1300, cut: 2600, go: 4400, act: 5200, cue: 7800, cueLen: 2600, row0: 1500, row: 900, hold: 3500 }
   : { lead: 0, feat: 1600, cut: 3400, go: 5200, act: 6100, cue: 8600, cueLen: 2800, row0: 1700, row: 1000, hold: 6000 };
