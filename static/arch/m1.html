@@ -1,0 +1,469 @@
+<!DOCTYPE html>
+<meta charset="utf-8">
+<html lang="en">
+<head>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>GistAct model animation</title>
+<style>
+@font-face{font-family:"NVIDIA Sans";src:url("../fonts/NVIDIASans_Rg.woff") format("woff");font-weight:400}
+@font-face{font-family:"NVIDIA Sans";src:url("../fonts/NVIDIASans_Md.woff") format("woff");font-weight:500 600}
+@font-face{font-family:"NVIDIA Sans";src:url("../fonts/NVIDIASans_Bd.woff") format("woff");font-weight:700 900}
+:root{
+  --bg:#171613; --panel:#211f1b; --panel2:#2a2722; --line:#34312b; --line2:#46423a;
+  --text:#f1ede4; --text2:#cfcabf;
+  --acc:#a8d65e; --acc-ink:#0f1600; --acc-soft:rgba(168,214,94,.14); --bad:#ff7b72;
+  --act:#7cb7e0; --act-soft:rgba(124,183,224,.14); --ctx:#e0b45a; --ins:#c39be6; --sup:#e9a35a;
+  --sans:"NVIDIA Sans",-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Apple SD Gothic Neo",sans-serif;
+  --mono:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+}
+*{box-sizing:border-box}
+body{margin:0;background:transparent;color:var(--text);font:400 17px/1.6 var(--sans)}
+.fig{border-radius:14px}
+.wrap{max-width:1300px;margin:0 auto;padding:28px 16px 80px}
+h1{font-size:28px;margin:0 0 6px}
+.sub{color:var(--text2);margin:0 0 18px;max-width:900px}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:18px;margin-bottom:26px}
+.card.rec{border-color:var(--acc)}
+.card h2{font-size:22px;margin:0 0 4px}
+.card h2 code{color:var(--acc);font:700 20px var(--mono);margin-right:8px}
+.ref img{width:100%;border-radius:10px;border:1px solid var(--line);display:block}
+.fig{background:var(--bg);border:1px solid var(--line);border-radius:12px;padding:14px 14px 10px}
+.bar{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin:0 0 4px}
+.bar button{font:500 15px var(--sans);color:var(--text);background:var(--panel2);border:1px solid var(--line2);border-radius:999px;padding:5px 14px;cursor:pointer}
+.bar button.on{background:var(--acc);color:var(--acc-ink);border-color:var(--acc)}
+.bar .sp{flex:1}
+.cap{min-height:3.1em;margin:8px 4px 0;font-size:16.5px;line-height:1.5}
+
+/* canvas: 1032 wide, drawn in canvas px and scaled to the card */
+.host{position:relative;width:100%;overflow:hidden auto;overflow-x:auto;overflow-y:hidden;transition:height .5s ease}
+.cv{position:absolute;left:0;top:0;width:1032px;height:480px;transform-origin:0 0;transition:transform .5s ease}
+.cv>*{position:absolute}
+.n{transition:opacity .5s ease}
+.cv.play .n:not(.on){opacity:.12}
+.lab{font:500 13.5px/1 var(--sans);color:var(--text2);text-align:center;white-space:nowrap}
+.ttl{font:600 14.5px/1 var(--sans);color:var(--text);text-align:center;white-space:nowrap}
+.blk{border-radius:16px;display:flex;flex-direction:column;justify-content:center;transition:box-shadow .4s}
+.blk b{font:700 24px/1.15 var(--sans)}
+.blk small{font:500 13.5px/1.3 var(--sans);color:var(--text2)}
+.vlm{padding:0 22px;background:linear-gradient(180deg,#34402a,#272d20);border:1.5px solid color-mix(in srgb,var(--acc) 55%,transparent)}
+.vlm b{color:var(--acc)}
+.ae{align-items:center;text-align:center;background:linear-gradient(180deg,#25384a,#1e2a36);border:1.5px solid color-mix(in srgb,var(--act) 60%,transparent)}
+.ae b{font-size:19px;color:var(--act)}
+.ae small{font-size:12.5px;line-height:1.35}
+.ae small.feat{font-size:12px}
+.ae small.feat{color:var(--act)}
+.vlm.busy{animation:glowg 1.2s ease-in-out infinite}
+.ae.busy{animation:glowb 1.2s ease-in-out infinite}
+@keyframes glowg{50%{box-shadow:0 0 0 3px rgba(168,214,94,.35)}}
+@keyframes glowb{50%{box-shadow:0 0 0 3px rgba(124,183,224,.4)}}
+.panel{border:1.5px solid color-mix(in srgb,var(--acc) 45%,transparent);border-radius:12px;background:rgba(168,214,94,.05)}
+.frame{border-radius:9px;overflow:hidden;border:1.5px solid var(--line2);background:#000;transition:border-color .3s}
+.frame.acc{border-color:var(--acc)}
+.frame img,.frame video{position:absolute;max-width:none;display:block}
+.frame svg{position:absolute;inset:0;width:100%;height:100%}
+.ins{border:1.5px solid var(--ins);background:rgba(195,155,230,.12);border-radius:10px;padding:0 12px;font:500 14px/1.35 var(--sans);color:var(--text);display:flex;align-items:center;justify-content:center;text-align:center}
+.tok{position:absolute;top:0;width:18px;height:18px;border-radius:5px;border:1.5px solid}
+.tok.ctx{border-color:var(--ctx);background:rgba(224,180,90,.18)}
+.tok.nz{border-color:var(--text2);background:var(--panel2)}
+.tok.act{border-color:var(--act);background:var(--act-soft)}
+.tok.slot{width:16px;height:16px;top:1px;border-color:var(--acc);background:transparent;border-style:dashed;transition:background .35s}
+.tok.slot.f{background:var(--acc);border-style:solid}
+.icon{border:1.5px solid var(--ctx);border-radius:10px;background:rgba(224,180,90,.1);display:grid;place-items:center;color:var(--ctx)}
+.icon svg{width:32px;height:32px;fill:none;stroke:currentColor;stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round}
+.zc{display:inline-flex;align-items:center;gap:5px;height:30px;padding:0 8px;border-radius:8px;background:var(--acc-soft);border:1.5px solid color-mix(in srgb,var(--acc) 55%,transparent);color:var(--acc);font:600 14px/1 var(--mono);white-space:nowrap;transition:border-color .3s,box-shadow .3s}
+.zc svg{width:20px;height:14px;fill:currentColor;flex:none}
+.zc.V svg{width:14px;height:14px}
+.zc b{font-weight:600}
+.zc sub{font-size:.72em;line-height:0;vertical-align:-.25em;margin-left:1px}
+.zc i{font-style:normal;color:var(--text2);font-weight:500;margin-left:2px}
+.zc.E{background:var(--acc);color:var(--acc-ink);border-color:var(--acc);padding:0 11px}
+.zw{display:flex;justify-content:center}
+.zw .zc{width:100%;justify-content:center}
+/* Think chips: an empty dashed slot waits, the writer ring arrives, the chip settles in */
+.zw::before{content:"";position:absolute;inset:0;border:1.5px dashed color-mix(in srgb,var(--acc) 45%,transparent);border-radius:8px;opacity:0;transition:opacity .4s ease}
+.cv.play.th .zw:not(.on)::before{opacity:1}
+.cv.play .zw.n:not(.on){opacity:1}
+.cv.play .zw .zc{transition:opacity .4s ease,transform .5s cubic-bezier(.2,.9,.3,1.15),filter .4s ease}
+.cv.play .zw:not(.on) .zc{opacity:0;transform:translateY(9px) scale(.78);filter:blur(3px)}
+.wring{z-index:2;border:2px solid var(--acc);border-radius:11px;box-shadow:0 0 16px rgba(168,214,94,.45);opacity:0;pointer-events:none;transition:left .26s cubic-bezier(.45,0,.2,1),width .26s cubic-bezier(.45,0,.2,1),opacity .35s ease}
+.wring.on{opacity:1}
+svg.ov{left:0;top:0;width:1032px;height:480px;overflow:visible;pointer-events:none}
+.ar{fill:none;stroke:var(--text2);stroke-width:1.7}
+.ar.acc{stroke:var(--acc);stroke-width:2.2}
+.ar.act{stroke:var(--act);stroke-width:2.2}
+.ar.dash{stroke-dasharray:5 4}
+.ar.bad{stroke:var(--bad);stroke-dasharray:4 4}
+.al{font:500 13px var(--sans);fill:var(--text2)}
+.al.acc{fill:var(--acc)} .al.act{fill:var(--act)} .al.bad{fill:var(--bad)} .al.sup{fill:var(--sup);font-weight:600}
+.xc{fill:var(--bg);stroke:var(--bad);stroke-width:1.8}.x{stroke:var(--bad);stroke-width:2.4;stroke-linecap:round}
+.cv.play .draw{stroke-dasharray:var(--len);stroke-dashoffset:var(--len)}
+.cv.play .on .draw{transition:stroke-dashoffset .7s ease-out;stroke-dashoffset:0}
+.frame .tagh{position:absolute;height:15px;padding:0 4px;border-radius:3px;background:var(--acc);color:var(--acc-ink);font:600 12px/15px var(--mono)}
+.trap{clip-path:polygon(10% 0,90% 0,100% 100%,0 100%);background:color-mix(in srgb,var(--sup) 28%,var(--panel));color:var(--text);font:600 11.5px/1.15 var(--sans);padding:5px 12px;text-align:center;flex:none}
+.trap.inv{clip-path:polygon(0 0,100% 0,90% 100%,10% 100%)}
+.eq{font:700 14px var(--mono);color:var(--sup)}
+.loss{font:600 12.5px var(--mono);color:var(--sup)}
+.q{font-style:italic;color:var(--text)}
+.crop{width:34px;height:34px;border-radius:6px;border:1.5px solid var(--sup);flex:none;background-repeat:no-repeat}
+/* inspection: the Think panel opens up into the decoded trace (the overview's content) */
+.insp{z-index:6;background:var(--bg);border:1.5px solid color-mix(in srgb,var(--acc) 55%,transparent);border-radius:14px;opacity:0;pointer-events:none;
+  clip-path:inset(32px 390px 248px 0 round 12px);transition:clip-path 1.2s cubic-bezier(.45,0,.2,1),opacity .3s}
+.insp.arm{opacity:1}
+.cv>:not(.insp){transition:opacity .45s ease}
+.cv.inspecting>:not(.insp){opacity:0!important}.insp.open{clip-path:inset(0 0 0 0 round 14px);pointer-events:auto}
+.cv.train .insp{display:none}
+/* train: the diagram steps aside for one worked example of state supervision */
+.cv.train>:not(.trs){opacity:0!important;pointer-events:none}
+.trs{opacity:0;pointer-events:none;transition:opacity .45s ease}.cv.train .trs{opacity:1;pointer-events:auto}
+.trs>*,.scn>*{position:absolute}
+.sw{transition:opacity .35s ease,transform .35s ease}.sw .zc{width:100%;justify-content:center;transition:border-color .3s,box-shadow .3s}
+.trs.focus .sw:not(.cur){opacity:.4}
+.sw.cur{transform:translateY(-2px)}.sw.cur .zc{border-color:var(--sup);box-shadow:0 0 0 3px rgba(233,163,90,.35)}.sw.cur .zc.E{background:var(--sup)}
+.lt{font:600 12.5px/1 var(--mono);color:var(--sup);text-align:center;opacity:0;transition:opacity .4s ease}.lt.on{opacity:1}
+.lact{font:500 13.5px/1.35 var(--sans);color:var(--text);opacity:0;transition:opacity .4s ease}.lact.on{opacity:1}.lact b{font:600 13px var(--mono);color:var(--sup)}
+.scn{inset:0;opacity:0;transition:opacity .5s ease}.scn.on{opacity:1}
+.st{font:600 14px/1.2 var(--sans);color:var(--text);text-align:center}
+.st.p{color:var(--acc)}.st.t{color:var(--sup)}
+.scn .trap{display:flex;flex-direction:column;justify-content:center;height:62px;font-size:13px}
+.scn .trap small{font:500 11.5px/1.2 var(--sans);color:var(--text2);margin-top:3px}
+.g rect{transition:fill-opacity .26s ease}
+.br{opacity:0;transition:opacity .4s ease}.br.on{opacity:1}
+.mid{display:flex;flex-direction:column;align-items:center;gap:9px;text-align:center}
+.mid .big{font:700 34px/1 var(--mono);color:var(--sup)}
+.track{width:112px;height:7px;border-radius:4px;background:var(--panel2);overflow:hidden}.track i{display:block;height:100%;width:100%;background:var(--sup);transition:width .26s ease}
+.track.tp i{background:var(--acc);width:0}
+.mid small{font:500 12px/1 var(--sans);color:var(--text2);margin-bottom:-4px}
+.fade{opacity:0;transition:opacity .45s ease}.fade.on{opacity:1}
+.frow{display:flex;align-items:center;gap:10px;font:500 14px/1.35 var(--sans);color:var(--text)}
+.frow .trap{height:auto}
+.vh{width:18px;height:18px;border-radius:5px;background:var(--acc);flex:none}
+.vec{background:var(--panel);border:1px solid var(--line);border-radius:9px}.vec i{position:absolute;width:9px;border-radius:2px;transition:top .26s ease,height .26s ease}
+.vec.p i{background:var(--acc)}.vec.t i{background:var(--sup)}
+.vec::before{content:"";position:absolute;left:0;right:0;top:75px;border-top:1px solid var(--line2)}
+.sen{font:500 14px/1.35 var(--sans);color:var(--text);text-align:center;font-style:italic}
+.insp>*{position:absolute}
+.idec{border:1.5px dashed var(--line2);border-radius:12px}
+.idec span{position:absolute;top:-8px;right:14px;padding:0 6px;background:var(--bg);font:500 12.5px/1 var(--mono);color:var(--text2)}
+.ir{display:flex;align-items:center;gap:8px;height:30px;opacity:0;transform:translateX(-8px);transition:opacity .4s ease,transform .4s ease}
+.ir.on{opacity:1;transform:none}
+.ir .cw{width:74px;flex:none;display:flex}.ir .zc{width:100%;justify-content:center}
+.ir svg.da{width:26px;height:10px;flex:none}
+.ir .dt,.ir .crop{margin-left:12px}
+.ir .dt{font:500 14px/1.2 var(--sans);color:var(--text);white-space:nowrap}
+.ir .crop{width:34px;height:34px;border-radius:50%;border:2px solid var(--acc)}
+.panel .ib{position:absolute;right:10px;top:-13px;padding:3px 11px;font-size:12.5px;transition:background .3s,box-shadow .3s}
+.panel .ib.cue{background:var(--sup);animation:cue 1s ease-in-out infinite}
+@keyframes cue{50%{box-shadow:0 0 0 6px rgba(233,163,90,.3)}}
+.iarr{fill:none;stroke:var(--acc);stroke-width:2.2}
+.vb,.ians,.iel{opacity:0;transition:opacity .45s ease}.vb.on,.ians.on,.iel.on{opacity:1}
+.iq{font:500 14px/1.35 var(--sans);color:var(--text);text-align:center}
+.ib{font:600 13px var(--sans);color:var(--acc-ink);background:var(--acc);border:0;border-radius:999px;padding:5px 12px;cursor:pointer}
+/* ?video: the teaser records the canvas alone (Remotion sets the captions) */
+body.vid{--bg:#07090a}body.vid .bar,body.vid .cap{display:none}body.vid .fig{border:0;padding:0;border-radius:0;background:var(--bg)}
+@media (prefers-reduced-motion:reduce){.n,.zw,.cv.play .on .draw{transition:none}.vlm.busy,.ae.busy{animation:none}}
+</style>
+</head>
+<body>
+<div class="fig" id="M1"></div>
+
+<script>
+(() => {
+'use strict';
+const VID = /[?&]video\b/.test(location.search), REDUCED = !VID && matchMedia('(prefers-reduced-motion: reduce)').matches;
+if (VID) document.body.classList.add('vid');
+// beat timings (ms); the teaser recording leaves room for its captions (each >= 2.4 s) and ends on the open decoded view
+const P = VID ? { lead: 900, feat: 1300, cut: 2600, go: 4400, act: 5200, cue: 7800, cueLen: 2600, row0: 1500, row: 900, hold: 3500 }
+  : { lead: 0, feat: 1600, cut: 3400, go: 5200, act: 6100, cue: 8600, cueLen: 2800, row0: 1700, row: 1000, hold: 6000 };
+// real robot (Franka FR3), the How-it-works episode: poster, clip (real time, played at 2x), Think trace, answer (think_overrides.js fr3:real_pos06_r0)
+const POSTER = '../../static/media/real_fr3_sr/position/gistact.jpg', CLIP = '../../static/media/real_fr3_sr/position/gistact.mp4', IW = 1440, IH = 1080;
+const Z = [{ k: 'L', s: 'I need the second object from the left.' }, { k: 'L', s: 'This lemon on the left is first.' }, { k: 'V', hot: [9, 13], r: { cx: .384, cy: .785, rx: .037, ry: .065 } },
+  { k: 'L', s: 'This corn next to it is second.' }, { k: 'V', hot: [10, 14], r: { cx: .497, cy: .733, rx: .036, ry: .062 } }, { k: 'L', s: 'So I’ll pick up the corn.' }, { k: 'E' }];
+const CORN = { cx: .497, cy: .733, rx: .036, ry: .062 };
+// images show the table (the empty wall above it is cut); the Act clip keeps the arm
+const CROP = { x: .12, y: .38, w: .8, h: .6 }, CROP_ACT = { x: .1, y: .1, w: .8, h: .8 };
+const glyphL = i => `<svg viewBox="0 0 34 20" aria-hidden="true">${[.55, .9, .35, .7, 1, .45, .8, .6].map((h, j) => { const v = .25 + .75 * ((h * 7 + i * .37 + j * .13) % 1); return `<rect x="${(j * 4.4).toFixed(1)}" y="${(20 - 18 * v).toFixed(1)}" width="3" height="${(18 * v).toFixed(1)}" rx="1"/>`; }).join('')}</svg>`;
+const glyphV = hot => `<svg viewBox="0 0 22 22" aria-hidden="true">${Array.from({ length: 16 }, (_, j) => `<rect x="${(j % 4) * 5.6}" y="${Math.floor(j / 4) * 5.6}" width="4.6" height="4.6" rx="1" opacity="${hot.includes(j) ? 1 : .22}"/>`).join('')}</svg>`;
+const zc = (k, i, hot) => k === 'E' ? `<span class="zc E">END</span>` : `<span class="zc ${k}">${k === 'L' ? glyphL(i) : glyphV(hot)}<b>z${i ? `<sub>${i}</sub>` : ''}</b><i>${k}</i></span>`;
+const media = (w, h, tag, C = CROP) => { const W = w / C.w, H = h / C.h; return tag.replace('>', ` style="width:${W.toFixed(1)}px;height:${H.toFixed(1)}px;left:${(-C.x * W).toFixed(1)}px;top:${(-C.y * H).toFixed(1)}px">`); };
+const toCrop = (r, w, h) => ({ x: (r.cx - CROP.x) / CROP.w * w, y: (r.cy - CROP.y) / CROP.h * h, rx: r.rx / CROP.w * w, ry: r.ry / CROP.h * h });
+// the overview's answer mark: viewfinder brackets plus a name tag above them
+const answerMark = (w, h, r, name) => { const g = toCrop(r, w, h), bw = 2 * g.rx + 10, bh = 2 * g.ry + 10, x0 = g.x - bw / 2, y0 = g.y - bh / 2, L = 7, tw = 8 + name.length * 7.4;
+  const d = [[x0, y0, 1, 1], [x0 + bw, y0, -1, 1], [x0, y0 + bh, 1, -1], [x0 + bw, y0 + bh, -1, -1]].map(([x, y, sx, sy]) => `M${x.toFixed(1)} ${(y + sy * L).toFixed(1)}L${x.toFixed(1)} ${y.toFixed(1)}L${(x + sx * L).toFixed(1)} ${y.toFixed(1)}`).join('');
+  return `<svg viewBox="0 0 ${w} ${h}"><path class="draw" d="${d}" fill="none" stroke="var(--acc)" stroke-width="2.6" stroke-linecap="round"/></svg><span class="tagh" style="left:${x0.toFixed(1)}px;top:${(y0 - 19).toFixed(1)}px">${name}</span>`; };
+const cropBg = r => { const s = Math.max(r.rx * IW, r.ry * IH) * 2 * 2.2, L = (r.cx * IW - s / 2) / (IW - s), T = (r.cy * IH - s / 2) / (IH - s);
+  return `background-image:url('${POSTER}');background-size:${(IW / s * 100).toFixed(0)}% ${(IH / s * 100).toFixed(0)}%;background-position:${(L * 100).toFixed(1)}% ${(T * 100).toFixed(1)}%`; };
+const brPath = (w, h, r, pad = 6, L = 7) => { const g = toCrop(r, w, h), bw = 2 * g.rx + 2 * pad, bh = 2 * g.ry + 2 * pad, x0 = g.x - bw / 2, y0 = g.y - bh / 2;
+  return [[x0, y0, 1, 1], [x0 + bw, y0, -1, 1], [x0, y0 + bh, 1, -1], [x0 + bw, y0 + bh, -1, -1]].map(([x, y, sx, sy]) => `M${x.toFixed(1)} ${(y + sy * L).toFixed(1)}L${x.toFixed(1)} ${y.toFixed(1)}L${(x + sx * L).toFixed(1)} ${y.toFixed(1)}`).join(''); };
+const robot = '<svg viewBox="0 0 24 24"><path d="M3.5 21h9"/><path d="M5.5 21v-2.6h5V21"/><path d="M8 18.4L6.6 12l6.9-4.6"/><circle cx="6.6" cy="12" r="1.7"/><circle cx="13.5" cy="7.4" r="1.7"/><path d="M15 8.4l3 2.6"/><path d="M18 11l2.4-1.3M18 11l.5 2.6"/></svg>';
+const SNOW = '❄';
+
+/* layout grid (canvas px, 1280 wide)
+   rows: titles 112 | Think panel + Answer 136-226 (centre 181) | VLM + Action expert 262-332 (centre 297) | inputs centred on 392 | input labels 436
+   columns: VLM 20-620 · Action expert 652-832 (centre 742) · Act 862-1012 · side 1028-1268 */
+const ROW = { t: 112, mid: 181, inC: 392, inL: 436 };
+const VLM = [20, 262, 600, 70], AEB = [652, 262, 190, 70], TH = [20, 136, 600, 90], ANS = [667, 136, 160, 90], ACT = [866, 241, 150, 112], AC = 747, ACTC = 941;
+// Think chips: six 74 px slots and END (54 px), 8 px apart, centred in the panel
+const RUNW = 1032, OV = [20, 104, 990, 370], CROP_WIDE = { x: .08, y: .18, w: .84, h: .63 };
+const CW = 74, EW = 54, GAP = 8, PAD = (TH[2] - (6 * CW + EW + 6 * GAP)) / 2;
+const CX = i => TH[0] + PAD + (i < 6 ? CW / 2 + i * (CW + GAP) : 6 * (CW + GAP) + EW / 2);
+const SLOT0 = 487, SX = i => SLOT0 + i * 19, FBX = SX(3) + 8;   // 7 Think input slots; the feedback line shares their centre x
+const box = ([x, y, w, h]) => `left:${x}px;top:${y}px;width:${w}px;height:${h}px`;
+const toks = (n, cls, gap) => Array.from({ length: n }, (_, i) => `<div class="tok ${cls}" style="left:${i * gap}px"></div>`).join('');
+const centred = (cx, w, y, h) => `left:${cx - w / 2}px;top:${y - h / 2}px;width:${w}px;height:${h}px`;
+
+/* Train: one worked example per state type (illustration of the losses, not logged training curves) */
+const GC = 16, GR = 9, GS = 22, MW = GC * GS, MH = GR * GS;   // 352 x 198 patch grid over the cropped image
+const cells = (cls, col) => `<svg class="g ${cls}" viewBox="0 0 ${MW} ${MH}"><rect width="${MW}" height="${MH}" fill="#000" fill-opacity=".28"/>${Array.from({ length: GC * GR }, (_, j) => `<rect class="c" x="${(j % GC) * GS}" y="${Math.floor(j / GC) * GS}" width="${GS}" height="${GS}" fill="${col}" style="fill-opacity:0" stroke="rgba(255,255,255,.14)" stroke-width=".6"/>`).join('')}</svg>`;
+const arrowR = (x0, x1, y, cls = '') => `<svg class="${cls}" style="left:${x0}px;top:${y - 6}px;width:${x1 - x0}px;height:12px;overflow:visible"><path d="M0 6H${x1 - x0 - 2}" stroke="var(--text2)" stroke-width="1.7"/><path d="M${x1 - x0 - 7} 1.5L${x1 - x0} 6L${x1 - x0 - 7} 10.5" fill="none" stroke="var(--text2)" stroke-width="1.7"/></svg>`;
+const arrowU = (x, y0, y1) => `<svg style="left:${x - 6}px;top:${y1}px;width:12px;height:${y0 - y1}px;overflow:visible"><path d="M6 ${y0 - y1}V2" stroke="var(--text2)" stroke-width="1.7"/><path d="M1.5 7L6 0L10.5 7" fill="none" stroke="var(--text2)" stroke-width="1.7"/></svg>`;
+const img = w => media(w, w * 9 / 16, `<img src="${POSTER}" alt="">`);
+const mid = (x, y, w, loss) => `<div class="mid fade hd" style="left:${x}px;top:${y}px;width:${w}px"><span class="big">≈</span><span class="loss">${loss}</span><span class="track tl"><i></i></span><small>training</small><span class="track tp"><i></i></span></div>`;
+const mapScene = (key, o) => `<div class="scn" data-s="${key}">
+  <div class="trap inv fade hd" style="left:0;top:160px;width:104px">${o.head}<small>${o.from}</small></div>${arrowR(106, 118, 191, 'fade hd')}
+  <div class="st p fade hd" style="left:120px;top:70px;width:352px">${o.pt}</div>
+  <div class="frame fade hd" style="left:120px;top:92px;width:352px;height:198px">${img(MW)}${cells('p', 'var(--acc)')}</div>
+  ${mid(478, 128, 146, o.loss)}
+  <div class="st t" style="left:626px;top:70px;width:352px">${o.tt}</div>
+  <div class="frame" style="left:626px;top:92px;width:352px;height:198px">${img(MW)}${cells('m', 'var(--sup)')}<svg viewBox="0 0 ${MW} ${MH}"><path class="br" d="${brPath(MW, MH, o.r, 4, 8)}" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round"/></svg></div>
+  ${o.extra || ''}</div>`;
+const bars = () => Array.from({ length: 20 }, (_, j) => `<i style="left:${6 + j * 14.4}px;top:75px;height:0"></i>`).join('');
+const vecScene = () => `<div class="scn" data-s="L">
+  <div class="trap inv fade hd" style="left:0;top:136px;width:104px">diffusion head<small>reads z<sub>4</sub></small></div>${arrowR(106, 118, 167, 'fade hd')}
+  <div class="st p fade hd" style="left:120px;top:70px;width:300px">ŝ, sampled from z<sub>4</sub></div>
+  <div class="vec p fade hd" style="left:120px;top:92px;width:300px;height:150px">${bars()}</div>
+  <div class="lab fade hd" style="left:120px;top:254px;width:300px">ŝ is fed back as the next input</div>
+  ${mid(428, 104, 134, 'ℒsem(ŝ, s)')}
+  <div class="st t" style="left:570px;top:70px;width:300px">s, the target</div>
+  <div class="vec t" style="left:570px;top:92px;width:300px;height:150px">${bars()}</div>
+  ${arrowU(720, 262, 245)}<div class="trap" style="left:625px;top:262px;width:190px;height:28px">SONAR encoder ${SNOW}</div>${arrowU(720, 314, 290)}
+  <div class="sen" style="left:560px;top:318px;width:320px">“This corn next to it is second.”</div></div>`;
+const trainScene = () => `<div class="trs" style="${box(OV)}">
+  <div class="ttl" style="left:0;top:14px;width:104px;text-align:left">Think states</div>
+  ${Z.map((z, i) => `<div class="sw" style="left:${120 + i * 82}px;top:6px;width:${i < 6 ? CW : EW}px;height:30px">${zc(z.k, i + 1, z.hot)}</div><div class="lt" data-k="${z.k}" style="left:${120 + i * 82}px;top:44px;width:${i < 6 ? CW : EW}px">${{ L: 'ℒsem', V: 'ℒreg', E: 'ℒans' }[z.k]}</div>`).join('')}
+  <div class="lact" style="left:700px;top:4px;width:290px">Action expert: <b>ℒact</b> on the demo’s action chunk (flow matching)</div>
+  ${mapScene('V', { head: 'region head', from: 'reads z<sub>3</sub>', pt: 'p̂, predicted region', tt: 'm, annotated region over patches', loss: 'ℒreg = KL(m ‖ p̂)', r: Z[2].r,
+    extra: `<div class="frow fade fr" style="left:120px;top:306px;width:860px"><span class="trap">DINOv2 ${SNOW}<br>patch features</span><span class="eq">× p̂ →</span><span class="vh"></span><span>pooled feature v̂, fed back after z<sub>3</sub>. It is the model’s own guess, never the label.</span></div>` })}
+  ${vecScene()}
+  ${mapScene('E', { head: 'answer head', from: 'reads END', pt: 'answer map', tt: 'm*, the target', loss: 'ℒans = KL(m* ‖ p)', r: CORN })}
+</div>`;
+
+function canvas(id) {
+  const M = n => `marker-end="url(#${n}${id})"`;
+  const up = (x, y0) => `<path class="ar draw" d="M${x} ${y0}L${x} 337" ${M('h')}/>`;
+  const ex = CX(6) + EW / 2 + 2;
+  return `<div class="cv">
+  <svg class="ov" viewBox="0 0 1032 480"><defs>
+    <marker id="h${id}" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6.5" markerHeight="6.5" orient="auto-start-reverse"><path d="M1 1L9 5L1 9z" fill="var(--text2)"/></marker>
+    <marker id="a${id}" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M1 1L9 5L1 9z" fill="var(--acc)"/></marker>
+    <marker id="b${id}" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M1 1L9 5L1 9z" fill="var(--act)"/></marker></defs>
+    <g class="n" data-n="inar">${up(CX(0), 354)}${up(180, 364)}${up(255, 381)}${up(380, 362)}${up(FBX, 382)}</g>
+    <g class="n" data-n="out"><path class="ar acc draw" d="M${CX(0)} 260L${CX(0)} 231" ${M('a')}/></g>
+    <g class="n" data-n="fb"><path class="ar acc dash" d="M${FBX} 229L${FBX} 258" ${M('a')}/><text class="al acc" x="${FBX - 8}" y="250" text-anchor="end">each state is fed back as the next input</text></g>
+    <g class="n" data-n="ans"><path class="ar acc draw" d="M${ex} ${ROW.mid}L658 ${ROW.mid}" ${M('a')}/></g>
+    <g class="n" data-n="bias"><path class="ar acc draw" d="M${AC} 228L${AC} 258" ${M('a')}/><text class="al acc" x="${AC + 8}" y="248">attention bias</text></g>
+    <g class="n" data-n="feat"><path class="ar act draw" d="M621 297L648 297" ${M('b')}/></g>
+    <g class="n" data-n="cut"><path class="ar bad" d="M380 446L380 462L${AC - 12} 462"/><circle class="xc" cx="${AC}" cy="462" r="10"/><path class="x" d="M${AC - 4.5} 457.5L${AC + 4.5} 466.5M${AC + 4.5} 457.5L${AC - 4.5} 466.5"/><text class="al bad" x="${AC + 18}" y="467">never reaches the action expert</text></g>
+    <g class="n" data-n="nz"><path class="ar draw" d="M${AC} 381L${AC} 337" ${M('h')}/></g>
+    <g class="n" data-n="act"><path class="ar act draw" d="M844 297L862 297" ${M('b')}/><path class="ar act draw" d="M${ACTC} 381L${ACTC} 358" ${M('b')}/></g>
+      </svg>
+  <div class="frame n" data-n="in" style="${centred(84, 128, ROW.inC, 72)}">${media(128, 72, `<img src="${POSTER}" alt="">`)}</div>
+  <div class="lab n" data-n="in" style="${centred(84, 100, ROW.inL, 14)}">Camera</div>
+  <div class="icon n" data-n="in" style="${centred(180, 52, ROW.inC, 52)}">${robot}</div><div class="lab n" data-n="in" style="${centred(180, 56, ROW.inL, 14)}">State</div>
+  <div class="n" data-n="in" style="${centred(255, 66, ROW.inC, 18)}">${toks(3, 'ctx', 24)}</div><div class="lab n" data-n="in" style="${centred(255, 60, ROW.inL, 14)}">Context</div>
+  <div class="ins n" data-n="in" style="${centred(380, 176, ROW.inC, 58)}">“Pick up the second object from the left.”</div><div class="lab n" data-n="in" style="${centred(380, 100, ROW.inL, 14)}">Instruction</div>
+  <div class="n" data-n="slots" style="${centred(SLOT0 + 62, 130, ROW.inC, 18)}">${Array.from({ length: 7 }, (_, i) => `<div class="tok slot f" data-slot="${i}" style="left:${i * 19}px"></div>`).join('')}</div>
+  <div class="lab n" data-n="slots" style="${centred(SLOT0 + 62, 120, ROW.inL, 14)}">Think inputs</div>
+
+  <div class="blk vlm n" data-n="vlm" style="${box(VLM)}"><b>VLM</b><small>Qwen3-VL-4B, one backbone for Think and Act</small></div>
+  <div class="blk ae n" data-n="aeb" style="${box(AEB)}"><b>Action expert</b><small>flow matching</small><small class="feat">reads image + context only</small></div>
+  <div class="n" data-n="nz" style="${centred(AC, 84, ROW.inC, 18)}">${toks(4, 'nz', 22)}</div><div class="lab n" data-n="nz" style="${centred(AC, 60, ROW.inL, 14)}">Noise</div>
+
+  <div class="wring" style="${centred(CX(0), CW + 10, ROW.mid, 40)}"></div>
+  <div class="ttl n" data-n="thp" style="${centred(TH[0] + TH[2] / 2, 140, ROW.t, 15)}">Think states</div>
+  <div class="panel n" data-n="thp" style="${box(TH)}"><button type="button" class="ib">Decode z<sub>1</sub>…z<sub>6</sub> (optional)</button></div>
+  ${Z.map((z, i) => `<div class="zw n" data-n="z${i}" style="${centred(CX(i), i < 6 ? CW : EW, ROW.mid, 30)}">${zc(z.k, i + 1, z.hot)}</div>`).join('')}
+
+  <div class="ttl n" data-n="ans" style="${centred(AC, 100, ROW.t, 15)}">Answer</div>
+  <div class="frame acc n" data-n="ans" style="${box(ANS)}">${media(160, 90, `<img src="${POSTER}" alt="">`)}${answerMark(160, 90, CORN, 'corn')}</div>
+
+  <div class="ttl n" data-n="act" style="${centred(ACTC, 100, 225, 15)}">Act</div>
+  <div class="frame n" data-n="act" style="${box(ACT)}">${media(150, 112, `<video muted playsinline preload="metadata" poster="${POSTER}" src="${CLIP}"></video>`, CROP_ACT)}</div>
+  <div class="n" data-n="act" style="${centred(ACTC, 90, ROW.inC, 18)}">${toks(4, 'act', 24)}</div>
+  <div class="lab n" data-n="act" style="${centred(ACTC, 150, ROW.inL, 14)}">a chunk every query</div>
+
+${trainScene()}
+  <div class="insp" style="${box(OV)}">
+    <svg class="ov" viewBox="0 0 990 370" style="width:990px;height:370px"><defs><marker id="ia${id}" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M1 1L9 5L1 9z" fill="var(--acc)"/></marker></defs>
+      <path class="iarr" d="M236 97L270 97" marker-end="url(#ia${id})"/>
+      <path class="iarr iel" d="M${282 + EW + 4} 313L758 313L758 97L774 97" marker-end="url(#ia${id})"/>
+      <path class="iarr ians" d="M878 160L878 182" marker-end="url(#ia${id})"/></svg>
+    ${[['Input', 128], ['Think', 319], ['Answer', 878]].map(([t, x]) => `<div class="ttl" style="${centred(x, 100, 22, 15)}">${t}</div>`).join('')}
+    <div class="frame" style="left:28px;top:40px;width:200px;height:113px">${media(200, 113, `<img src="${POSTER}" alt="">`)}<svg viewBox="0 0 200 113">${Z.map((z, i) => z.r ? `<path class="vb" data-r="${i}" d="${brPath(200, 113, z.r, 4, 6)}" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round"/>` : '').join('')}</svg></div>
+    <div class="iq" style="left:28px;top:166px;width:200px">“Pick up the second<br>object from the left.”</div>
+    <div class="idec" style="left:394px;top:40px;width:348px;height:258px"><span>decoded for inspection</span></div>
+    ${Z.map((z, i) => `<div class="ir" data-r="${i}" style="left:282px;top:${52 + i * 41}px;width:470px"><span class="cw"${z.k === 'E' ? ` style="width:${EW}px"` : ''}>${zc(z.k, i + 1, z.hot)}</span>${z.k === 'E' ? '' : `<svg class="da" viewBox="0 0 26 10"><path d="M1 5H22" stroke="var(--acc)" stroke-width="1.6" stroke-dasharray="3 3"/><path d="M19 1.5L24 5L19 8.5" fill="none" stroke="var(--acc)" stroke-width="1.6"/></svg>${z.s ? `<span class="dt">${z.s}</span>` : `<span class="crop" style="${cropBg(z.r)}"></span>`}`}</div>`).join('')}
+    <div class="frame acc ians" style="left:778px;top:40px;width:200px;height:113px">${media(200, 113, `<img src="${POSTER}" alt="">`)}${answerMark(200, 113, CORN, 'corn')}</div>
+    <div class="ttl ians" style="left:890px;top:164px;width:40px;text-align:left">Act</div>
+    <div class="frame ians" style="left:778px;top:188px;width:200px;height:113px">${media(200, 113, `<video class="iv" muted playsinline preload="metadata" poster="${POSTER}" src="${CLIP}"></video>`, CROP_WIDE)}</div>
+    <div class="lab ians" style="${centred(878, 210, 316, 14)}">Actions for the marked target.</div>
+  </div>
+</div>`;
+}
+
+const CAP = {
+  rest: 'One VLM does both jobs. Think runs inside it and ends on an answer marked in the image; the action expert reads image and context features plus that answer, never the instruction. Press Decode to read Think.',
+  in: 'The VLM reads the camera image, the robot state, a few learned context tokens and the instruction.',
+  think: 'Think runs inside the same VLM: each latent state comes out and is fed back as the next input, until a learned END.',
+  cue: 'Think stays latent: the policy never turns it into words. When we want to check what it thought, a frozen SONAR decoder can read each state.',
+  insp: 'Optional, for inspection: a frozen SONAR decoder turns each Language state back into a sentence, and each Vision state is drawn as its region (white brackets; green marks the answer). The policy itself never reads these.',
+  end: 'The answer head reads the END state and marks the target in the image: the corn.',
+  feat: 'The action expert reads only image and context features from the VLM, and the answer biases its attention toward the marked region.',
+  cut: 'The instruction never reaches the action expert. It acts on what Think marked.',
+  go: 'It turns noise into an action chunk with flow matching, at every query.',
+  tv1: 'In training, each Think state gets its own target. For the Vision state z₃, the target m is the annotated lemon region, spread over the image patches.',
+  tv2: 'A region head turns z₃ into a map p̂ over the same patches. Training lowers KL(m ‖ p̂), so p̂ moves onto the lemon.',
+  tv3: 'The VLM gets back its own guess: frozen DINOv2 patch features pooled by p̂. The label is never fed back.',
+  tl: 'Language states are trained the same way in sentence space. A diffusion head samples ŝ from z₄, pulled toward the frozen SONAR embedding of its sentence.',
+  ta: 'After END, the answer head scores the image patches and is trained toward the target: the corn.',
+  train: 'Every Think state and the answer get their own target, and the action expert learns the demo’s actions with flow matching. No reasoning teacher, no distillation, no RL.'
+};
+
+/* the sequence: parts light up in order and arrows draw; nothing flies */
+function player(host, cv, cap) {
+  const on = (...ns) => ns.forEach(n => cv.querySelectorAll(`[data-n="${n}"]`).forEach(e => e.classList.add('on')));
+  const vid = cv.querySelector('video'), slots = [...cv.querySelectorAll('[data-slot]')], ring = cv.querySelector('.wring');
+  const writer = i => { const w = i < 6 ? CW : EW; ring.style.left = CX(i) - w / 2 - 5 + 'px'; ring.style.width = w + 10 + 'px'; };
+  const vlm = cv.querySelector('.vlm'), ae = cv.querySelector('.ae');
+  const insp = cv.querySelector('.insp'), rows = [...insp.querySelectorAll('.ir')], vbs = [...insp.querySelectorAll('.vb')], ians = [...insp.querySelectorAll('.ians')], iel = insp.querySelector('.iel');
+  let T = [], seen = false;
+  const at = (ms, f) => T.push(setTimeout(f, ms));
+  cv.querySelectorAll('.draw').forEach(p => p.style.setProperty('--len', Math.ceil(p.getTotalLength()) + 1));
+  vid.addEventListener('timeupdate', () => { if (vid.currentTime > 7.5) vid.currentTime = 2.6; });
+  const loopVid = () => { try { vid.currentTime = 2.6; } catch (e) {} vid.playbackRate = 2; vid.play().catch(() => {}); };
+  const iv = insp.querySelector('.iv'); iv.addEventListener('timeupdate', () => { if (iv.currentTime > 7.5) iv.currentTime = 2.6; });
+  const close = () => { insp.classList.remove('open'); cv.classList.remove('inspecting'); iv.pause(); setTimeout(() => insp.classList.remove('arm'), 1200); };
+  const shut = () => { cv.querySelector('.ib').classList.remove('cue'); insp.classList.remove('open', 'arm'); cv.classList.remove('inspecting'); iv.pause(); [...rows, ...vbs, ...ians, iel].forEach(e => e.classList.remove('on')); };
+  // the Think panel opens into the decoded trace, row by row; Vision rows mark their region on the input image
+  const ib = cv.querySelector('.ib');
+  const inspect = (t0, after) => {
+    at(t0, () => { shut(); cap.textContent = CAP.cue; ib.classList.add('cue'); });
+    const t = t0 + P.cueLen;
+    at(t, () => { ib.classList.remove('cue'); cap.textContent = CAP.insp; insp.classList.add('arm'); cv.classList.add('inspecting'); requestAnimationFrame(() => requestAnimationFrame(() => insp.classList.add('open'))); });
+    rows.forEach((r, i) => at(t + P.row0 + i * P.row, () => { r.classList.add('on'); vbs.filter(v => +v.dataset.r === i).forEach(v => v.classList.add('on')); if (i === 6) iel.classList.add('on'); }));
+    const t2 = t + P.row0 + 7 * P.row;
+    at(t2, () => { ians.forEach(e => e.classList.add('on')); try { iv.currentTime = 2.6; } catch (e) {} iv.playbackRate = 2; iv.play().catch(() => {}); });
+    if (VID) return;
+    at(t2 + P.hold, close);
+    at(t2 + P.hold + 1300, after);
+  };
+  const rest = () => { T.forEach(clearTimeout); T = []; shut(); cv.classList.remove('play', 'th'); ring.classList.remove('on'); vlm.classList.remove('busy'); ae.classList.remove('busy'); slots.forEach(s => s.classList.add('f'));
+    cap.textContent = cv.classList.contains('train') ? CAP.train : CAP.rest; if (seen) loopVid(); };
+  const play = () => {
+    if (REDUCED || cv.classList.contains('train')) return rest();
+    T.forEach(clearTimeout); T = []; shut(); cv.classList.remove('th'); cv.classList.add('play'); ring.style.transition = 'none'; writer(0); void ring.offsetWidth; ring.style.transition = ''; cv.querySelectorAll('.n').forEach(e => e.classList.remove('on')); slots.forEach(s => s.classList.remove('f')); vid.pause();
+    cap.textContent = CAP.in;
+    at(200, () => on('in', 'slots', 'vlm', 'aeb'));
+    at(800, () => on('inar'));
+    at(1500 + P.lead, () => { vlm.classList.add('busy'); cap.textContent = CAP.think; cv.classList.add('th'); on('thp', 'out', 'fb'); slots[0].classList.add('f'); ring.classList.add('on'); });
+    const DT = 400;   // one state every 0.4 s: the ring sits on the slot, the chip settles in, the ring slides on
+    Z.forEach((z, i) => { at(2000 + P.lead + i * DT, () => { on('z' + i); if (i < 6) slots[i + 1].classList.add('f'); }); if (i < 6) at(2000 + P.lead + i * DT + 170, () => writer(i + 1)); });
+    const t1 = 2000 + P.lead + 7 * DT + 300;
+    at(t1 - 200, () => ring.classList.remove('on'));
+    at(t1, () => { vlm.classList.remove('busy'); cap.textContent = CAP.end; on('ans'); });
+    at(t1 + P.feat, () => { cap.textContent = CAP.feat; on('bias', 'feat'); });
+    at(t1 + P.cut, () => { cap.textContent = CAP.cut; on('cut'); });
+    at(t1 + P.go, () => { cap.textContent = CAP.go; on('nz'); ae.classList.add('busy'); });
+    at(t1 + P.act, () => { on('act'); ae.classList.remove('busy'); loopVid(); });
+    inspect(t1 + P.cue, rest);
+  };
+  if (VID) window.__m1play = play;
+  else new IntersectionObserver(es => { const v = es.some(e => e.isIntersecting); if (v && !seen) { seen = true; play(); } else if (!v && seen) { seen = false; vid.pause(); } }, { threshold: .35 }).observe(host);
+  rest(); if (!REDUCED) cv.classList.add('play');
+  else { insp.classList.add('arm', 'open'); cv.classList.add('inspecting'); [...rows, ...vbs, ...ians, iel].forEach(e => e.classList.add('on')); }
+  const again = () => { T.forEach(clearTimeout); T = []; inspect(0, () => { cap.textContent = CAP.rest; }); };
+  ib.onclick = again;
+  return { play, rest };
+}
+const rnd = (a, b) => { const x = Math.sin(a * 127.1 + b * 311.7) * 43758.5453; return x - Math.floor(x); };
+const ease = f => f < .5 ? 2 * f * f : 1 - (-2 * f + 2) ** 2 / 2;
+const track = (sc, l, f) => { sc.querySelector('.tl i').style.width = Math.max(4, l * 100).toFixed(1) + '%'; sc.querySelector('.tp i').style.width = (f * 100).toFixed(1) + '%'; };
+// a patch map that starts diffuse and off target and settles on the region; the bar under it is KL(m || p)
+function mapper(sc, r, start) {
+  const pc = [...sc.querySelectorAll('.g.p .c')], mc = [...sc.querySelectorAll('.g.m .c')], br = sc.querySelector('.br');
+  const g = toCrop(r, MW, MH), ov = (a0, a1, b0, b1) => Math.max(0, Math.min(a1, b1) - Math.max(a0, b0));
+  let m = pc.map((_, j) => { const c = j % GC, q = Math.floor(j / GC); return ov(c * GS, c * GS + GS, g.x - g.rx, g.x + g.rx) * ov(q * GS, q * GS + GS, g.y - g.ry, g.y + g.ry); });
+  const ms = m.reduce((a, b) => a + b); m = m.map(v => v / ms); const mx = Math.max(...m);
+  const tc = m.reduce((a, v, j) => [a[0] + v * (j % GC + .5), a[1] + v * (Math.floor(j / GC) + .5)], [0, 0]);
+  const P = (f, k) => { const e = ease(f), cx = start[0] + (tc[0] - start[0]) * e, cy = start[1] + (tc[1] - start[1]) * e, sg = 3.4 - 2.6 * e, nz = .9 * (1 - e);
+    const p = m.map((_, j) => Math.exp(-((j % GC + .5 - cx) ** 2 + (Math.floor(j / GC) + .5 - cy) ** 2) / (2 * sg * sg)) * (1 + nz * (2 * rnd(j, k) - 1)) + 1e-4), t = p.reduce((a, b) => a + b);
+    return p.map(v => v / t); };
+  const kl = p => m.reduce((a, v, j) => v > 0 ? a + v * Math.log(v / p[j]) : a, 0), K0 = kl(P(0, 0));
+  return {
+    step(f, k) { const p = P(f, k), pm = Math.max(...p); pc.forEach((c, j) => c.style.fillOpacity = (p[j] / pm * .8).toFixed(3)); track(sc, kl(p) / K0, f); },
+    bracket(on) { br.classList.toggle('on', on); },
+    cells(on) { mc.forEach((c, j) => c.style.fillOpacity = on ? (m[j] / mx * .75).toFixed(3) : 0); },
+    reset() { this.bracket(false); this.cells(false); this.step(0, 0); track(sc, 1, 0); }
+  };
+}
+// a 20-d stand-in for the SONAR vector: the sample settles onto the target
+function vecr(sc) {
+  const pb = [...sc.querySelectorAll('.vec.p i')], tb = [...sc.querySelectorAll('.vec.t i')], S = tb.map((_, j) => (rnd(j, 99) - .5) * 1.8);
+  const set = (bs, v) => bs.forEach((b, j) => { const h = Math.max(2, Math.abs(v[j]) * 62); b.style.height = h + 'px'; b.style.top = (v[j] > 0 ? 75 - h : 75) + 'px'; });
+  const V = (f, k) => { const e = ease(f); return S.map((x, j) => x * e + (1 - e) * (rnd(j, k + 7) - .5) * 1.8); };
+  const L = v => v.reduce((a, x, j) => a + (x - S[j]) ** 2, 0), L0 = L(V(0, 0));
+  set(tb, S);
+  return { step(f, k) { const v = V(f, k); set(pb, v); track(sc, L(v) / L0, f); }, reset() { this.step(0, 0); track(sc, 1, 0); } };
+}
+function trainer(cv, cap) {
+  const trs = cv.querySelector('.trs'), sws = [...trs.querySelectorAll('.sw')], S = k => trs.querySelector(`[data-s="${k}"]`);
+  const sv = mapper(S('V'), Z[2].r, [11.5, 2.2]), sa = mapper(S('E'), CORN, [3, 2.5]), sl = vecr(S('L'));
+  let T = []; const at = (ms, f) => T.push(setTimeout(f, ms));
+  const scene = k => trs.querySelectorAll('.scn').forEach(e => e.classList.toggle('on', e.dataset.s === k));
+  const fades = (k, sel) => S(k).querySelectorAll(sel).forEach(e => e.classList.add('on'));
+  const cur = i => { sws.forEach((s, j) => s.classList.toggle('cur', j === i)); trs.classList.toggle('focus', i >= 0); };
+  const tag = k => trs.querySelectorAll(`.lt[data-k="${k}"]`).forEach(e => e.classList.add('on'));
+  const run = (o, t0, n = 16, dt = 230) => { for (let k = 0; k <= n; k++) at(t0 + k * dt, () => o.step(k / n, k)); return t0 + n * dt; };
+  const stop = () => { T.forEach(clearTimeout); T = []; };
+  const reset = () => { stop(); [sv, sa, sl].forEach(o => o.reset()); trs.querySelectorAll('.fade,.lt,.lact').forEach(e => e.classList.remove('on')); cur(-1); };
+  const rest = () => { reset(); scene('V'); sv.bracket(true); sv.cells(true); sv.step(1, 16); fades('V', '.fade'); trs.querySelectorAll('.lt,.lact').forEach(e => e.classList.add('on')); cap.textContent = CAP.train; };
+  const play = () => {
+    if (REDUCED) return rest();
+    reset(); scene('V'); cap.textContent = CAP.tv1;
+    at(500, () => cur(2)); at(1100, () => sv.bracket(true)); at(2300, () => sv.cells(true));
+    at(5000, () => { cap.textContent = CAP.tv2; fades('V', '.hd'); });
+    let t = run(sv, 5800);
+    at(t + 300, () => tag('V'));
+    at(t + 700, () => { cap.textContent = CAP.tv3; fades('V', '.fr'); });
+    t += 5900;
+    at(t, () => { scene('L'); cur(3); cap.textContent = CAP.tl; });
+    at(t + 700, () => fades('L', '.hd'));
+    t = run(sl, t + 1400); at(t + 300, () => tag('L'));
+    t += 2000;
+    at(t, () => { scene('E'); cur(6); cap.textContent = CAP.ta; sa.bracket(true); sa.cells(true); });
+    at(t + 800, () => fades('E', '.hd'));
+    t = run(sa, t + 1500); at(t + 300, () => tag('E'));
+    at(t + 1600, () => { cur(-1); scene('V'); trs.querySelector('.lact').classList.add('on'); cap.textContent = CAP.train; });
+  };
+  return { play, rest, stop };
+}
+const TOP = 96, BOT = 480;   // visible band of the canvas, RUNW wide
+function mount(el, id) {
+  el.insertAdjacentHTML('beforeend', `<div class="host">${canvas(id)}</div><p class="cap"></p>`);
+  const host = el.querySelector('.host'), cv = host.querySelector('.cv'), cap = host.nextElementSibling;
+  const fit = () => { const s = Math.max(host.clientWidth / RUNW, .6);   // phones: keep text readable and let the figure scroll sideways
+    cv.style.transform = `scale(${s}) translateY(-${TOP}px)`; host.style.height = (BOT - TOP) * s + 'px'; }; fit(); addEventListener('resize', fit);
+  return { cv, fit, p: player(host, cv, cap), t: trainer(cv, cap) };
+}
+(() => {
+  const el = document.getElementById('M1');
+  el.innerHTML = `<div class="bar"><button type="button" class="md on" data-m="run">Run</button><button type="button" class="md" data-m="train">Train</button><span class="sp"></span><button type="button" class="rp">Replay</button></div>`;
+  const m = mount(el, 'm1'), bs = [...el.querySelectorAll('.md')];
+  bs.forEach(b => b.onclick = () => { const tr = b.dataset.m === 'train'; bs.forEach(x => x.classList.toggle('on', x === b)); m.cv.classList.toggle('train', tr); if (tr) { m.p.rest(); m.t.play(); } else { m.t.stop(); m.p.play(); } });
+  el.querySelector('.rp').onclick = () => m.cv.classList.contains('train') ? m.t.play() : m.p.play();
+})();
+  const post = () => parent !== window && parent.postMessage({ gaM1h: Math.ceil(document.documentElement.getBoundingClientRect().height) }, '*');
+  new ResizeObserver(post).observe(document.body); post();
+})();
+</script>
+</body>
+</html>

@@ -859,7 +859,9 @@
   const glyphV = (hot, n = 4) => `<svg class="zg" viewBox="0 0 22 22" aria-hidden="true">${Array.from({ length: n * n }, (_, i) => `<rect x="${(i % n * 5.6).toFixed(1)}" y="${(Math.floor(i / n) * 5.6).toFixed(1)}" width="4.6" height="4.6" rx="1" opacity="${hot.includes(i) ? 1 : 0.22}"/>`).join("")}</svg>`;
   const zchip = (kind, i, hot = []) => `<span class="zc ${kind}">${kind === "L" ? glyphL(i) : glyphV(hot)}<b>z<sub>${i}</sub></b><span class="k">${kind}</span></span>`;
   (() => {
-    const host = $("#fig"), e = byId(R2, "real_pos06_r0"), c = e ? clipOf(e, "ours") : null, poster = c ? c.poster : "", ans = e && e.think ? [].concat(e.think.goal || [])[0] : null;
+    const host = $("#fig");
+    if (!host) return;
+    const e = byId(R2, "real_pos06_r0"), c = e ? clipOf(e, "ours") : null, poster = c ? c.poster : "", ans = e && e.think ? [].concat(e.think.goal || [])[0] : null;
     const Z = [{ kind: "L", text: "I need the second object from the left." }, { kind: "L", text: "This lemon on the left is first." }, { kind: "V", cx: 0.384, cy: 0.785, rx: 0.037, ry: 0.065, hot: [9, 13] }, { kind: "L", text: "This corn next to it is second." }, { kind: "V", cx: 0.497, cy: 0.733, rx: 0.036, ry: 0.062, hot: [10, 14] }, { kind: "L", text: "So I\u2019ll pick up the corn." }];
     const ZV = Z.filter((s) => s.kind === "V");
     (e && e.think && e.think.steps || []).filter((s) => s.kind === "V").slice(0, ZV.length).forEach((s, i) => Object.assign(ZV[i], { cx: s.cx, cy: s.cy, rx: s.rx, ry: s.ry }));
@@ -1141,6 +1143,10 @@
       sync();
     }, 0.2);
   })();
+  addEventListener("message", (ev) => {
+    const f = $("#m1");
+    if (f && ev.source === f.contentWindow && ev.data && ev.data.gaM1h) f.style.height = ev.data.gaM1h + "px";
+  });
   $("#copyBib").addEventListener("click", (ev) => {
     navigator.clipboard && navigator.clipboard.writeText($("#bib").textContent);
     ev.target.textContent = "Copied";
